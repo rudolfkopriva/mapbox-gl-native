@@ -1,22 +1,36 @@
 #include <mbgl/actor/scheduler.hpp>
-#include <mbgl/util/thread_local.hpp>
 #include <mbgl/util/thread_pool.hpp>
+
+#include <mbgl/util/thread_local.hpp>
 
 namespace mbgl {
 
-util::ThreadLocal<Scheduler> g_currentScheduler;
-
+#ifdef MB_COMPILER_CXX_THREAD_LOCAL
+namespace {
+    MB_THREAD_LOCAL Scheduler* currentScheduler;
+} // namespace
+#else
+util::ThreadLocal<Scheduler> currentScheduler;
 static auto& current() {
     static util::ThreadLocal<Scheduler> scheduler;
     return scheduler;
 };
+#endif
 
 void Scheduler::SetCurrent(Scheduler* scheduler) {
+#ifdef MB_COMPILER_CXX_THREAD_LOCAL
+    currentScheduler = scheduler;
+#else
     current().set(scheduler);
+#endif
 }
 
 Scheduler* Scheduler::GetCurrent() {
+#ifdef MB_COMPILER_CXX_THREAD_LOCAL
+    return currentScheduler;
+#else
     return current().get();
+#endif
 }
 
 // static
