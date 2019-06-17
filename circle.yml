@@ -169,6 +169,17 @@ commands:
         keys:
           - 'gradle/v1/{{ checksum "platform/android/gradle/dependencies.gradle" }}/{{ checksum "platform/android/build.gradle" }}/{{ checksum "platform/android/gradle/wrapper/gradle-wrapper.properties" }}'
           - 'gradle/v1'
+  install-module:
+    parameters:
+      name:
+        type: string
+    steps:
+      - run:
+        name: Checkout 'modules/<< parameters.name >>'
+        command: git submodule update --init modules/<< parameters.name >>
+      - run:
+        name: Install dependencies for 'modules/<< parameters.name >>'
+        command: (cd modules/<< parameters.name >> && npm install)
 
 
   install-dependencies:
