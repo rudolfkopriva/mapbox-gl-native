@@ -79,11 +79,22 @@ public class FileSource {
 
   }
 
+  /**
+   * This callback receives an asynchronous response indicating if an operation has succeeded or failed.
+   */
   @Keep
   public interface FileSourceCallback {
 
+    /**
+     * Receives the success of an operation
+     */
     void onSuccess();
 
+    /**
+     * Receives an error message if an operation was not successful
+     *
+     * @param message the error message
+     */
     void onError(@NonNull String message);
 
   }
@@ -413,15 +424,73 @@ public class FileSource {
   @Keep
   private native void setResourceCachePath(String path, ResourcesCachePathChangeCallback callback);
 
+  /**
+   * Delete existing database and re-initialize.
+   *
+   * When the operation is complete or encounters an error, the given callback will be
+   * executed on the database thread; it is the responsibility of the SDK bindings
+   * to re-execute a user-provided callback on the main thread.
+   *
+   * @param callback the callback to be invoked when the database was reset or when the operation erred.
+   */
   @Keep
   public native void resetDatabase(@Nullable FileSourceCallback callback);
 
+  /**
+   * Forces revalidation of the ambient cache.
+   *
+   * Forces Mapbox GL Native to revalidate resources stored in the ambient
+   * cache with the tile server before using them, making sure they
+   * are the latest version. This is more efficient than cleaning the
+   * cache because if the resource is considered valid after the server
+   * lookup, it will not get downloaded again.
+   *
+   * Resources overlapping with offline regions will not be affected
+   * by this call.
+   *
+   * @param callback the callback to be invoked when the ambient cache was invalidated or when the operation erred.
+   */
   @Keep
   public native void invalidateAmbientCache(@Nullable FileSourceCallback callback);
 
+  /**
+   * Erase resources from the ambient cache, freeing storage space.
+   *
+   * Erases the ambient cache, freeing resources. This operation can be
+   * potentially slow because it will trigger a VACUUM on SQLite,
+   * forcing the database to move pages on the filesystem.
+   *
+   * Resources overlapping with offline regions will not be affected
+   * by this call.
+   *
+   * @param callback the callback to be invoked when the ambient cache was cleared or when the operation erred.
+   */
   @Keep
   public native void clearAmbientCache(@Nullable FileSourceCallback callback);
 
+  /**
+   * Sets the maximum size in bytes for the ambient cache.
+   *
+   * This call is potentially expensive because it will try
+   * to trim the data in case the database is larger than the
+   * size defined. The size of offline regions are not affected
+   * by this settings, but the ambient cache will always try
+   * to not exceed the maximum size defined, taking into account
+   * the current size for the offline regions.
+   *
+   * If the maximum size is set to 50 MB and 40 MB are already
+   * used by offline regions, the cache size will be effectively
+   * 10 MB.
+   *
+   * Setting the size to 0 will disable the cache if there is no
+   * offline region on the database.
+   *
+   * This method should always be called before using the database,
+   * otherwise the default maximum size will be used.
+   *
+   * @param size the maximum size of the ambient cache
+   * @param callback the callback to be invoked when the the maximum size has been set or when the operation erred.
+   */
   @Keep
   public native void setMaximumAmbientCacheSize(long size, @Nullable FileSourceCallback callback);
 
