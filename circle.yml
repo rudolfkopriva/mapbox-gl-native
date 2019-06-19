@@ -171,15 +171,15 @@ commands:
           - 'gradle/v1'
   install-module:
     parameters:
-      name:
+      module:
         type: string
     steps:
       - run:
-        name: Checkout 'modules/<< parameters.name >>'
-        command: git submodule update --init modules/<< parameters.name >>
+          name: Checkout 'modules/<< parameters.module >>'
+          command: git submodule update --init modules/<< parameters.module >>
       - run:
-        name: Install dependencies for 'modules/<< parameters.name >>'
-        command: (cd modules/<< parameters.name >> && npm install)
+          name: Install dependencies for 'modules/<< parameters.module >>'
+          command: (cd modules/<< parameters.module >> && npm install)
 
 
   install-dependencies:
@@ -1113,9 +1113,11 @@ jobs:
     environment:
       BUILDTYPE: Debug
       HOMEBREW_NO_AUTO_UPDATE: 1
+      MAPBOX_RENDER_BACKEND: opengl
     steps:
       - install-macos-dependencies
       - install-dependencies
+      - install-module: { module: metal }
       - build-macos-test
       - check-public-symbols
       - run:
