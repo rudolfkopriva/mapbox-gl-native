@@ -8,6 +8,7 @@
 #include <mbgl/util/logging.hpp>
 
 #include <mbgl/storage/sqlite3.hpp>
+#include <mbgl/util/string.hpp>
 
 #include "asset_manager_file_source.hpp"
 
@@ -98,6 +99,82 @@ void FileSource::setResourceCachePath(jni::JNIEnv& env, const jni::String& path,
     fileSource->setResourceCachePath(newPath + DATABASE_FILE, pathChangeCallback->self());
 }
 
+void FileSource::resetDatabase(jni::JNIEnv& env_, const jni::Object<FileSourceCallback>& callback_) {
+    auto globalCallback = jni::NewGlobal<jni::EnvAttachingDeleter>(env_, callback_);
+
+    fileSource->resetDatabase([
+        //Keep a shared ptr to a global reference of the callback so they are not GC'd in the meanwhile
+        callback = std::make_shared<decltype(globalCallback)>(std::move(globalCallback))
+    ](std::exception_ptr exception) mutable {
+
+        // Reattach, the callback comes from a different thread
+        android::UniqueEnv env = android::AttachEnv();
+
+        if (exception) {
+            FileSource::FileSourceCallback::onError(*env, *callback, jni::Make<jni::String>(*env, mbgl::util::toString(exception)));
+        } else {
+            FileSource::FileSourceCallback::onSuccess(*env, *callback);
+        }
+    });
+}
+
+void FileSource::invalidateAmbientCache(jni::JNIEnv& env_, const jni::Object<FileSourceCallback>& callback_) {
+    auto globalCallback = jni::NewGlobal<jni::EnvAttachingDeleter>(env_, callback_);
+
+    fileSource->invalidateAmbientCache([
+        //Keep a shared ptr to a global reference of the callback so they are not GC'd in the meanwhile
+        callback = std::make_shared<decltype(globalCallback)>(std::move(globalCallback))
+    ](std::exception_ptr exception) mutable {
+
+        // Reattach, the callback comes from a different thread
+        android::UniqueEnv env = android::AttachEnv();
+
+        if (exception) {
+            FileSource::FileSourceCallback::onError(*env, *callback, jni::Make<jni::String>(*env, mbgl::util::toString(exception)));
+        } else {
+            FileSource::FileSourceCallback::onSuccess(*env, *callback);
+        }
+    });
+}
+
+void FileSource::clearAmbientCache(jni::JNIEnv& env_, const jni::Object<FileSourceCallback>& callback_) {
+    auto globalCallback = jni::NewGlobal<jni::EnvAttachingDeleter>(env_, callback_);
+
+    fileSource->clearAmbientCache([
+        //Keep a shared ptr to a global reference of the callback so they are not GC'd in the meanwhile
+        callback = std::make_shared<decltype(globalCallback)>(std::move(globalCallback))
+    ](std::exception_ptr exception) mutable {
+
+        // Reattach, the callback comes from a different thread
+        android::UniqueEnv env = android::AttachEnv();
+
+        if (exception) {
+            FileSource::FileSourceCallback::onError(*env, *callback, jni::Make<jni::String>(*env, mbgl::util::toString(exception)));
+        } else {
+            FileSource::FileSourceCallback::onSuccess(*env, *callback);
+        }
+    });
+}
+
+void FileSource::setMaximumAmbientCacheSize(jni::JNIEnv& env_, const jni::jlong size_, const jni::Object<FileSourceCallback>& callback_) {
+    auto globalCallback = jni::NewGlobal<jni::EnvAttachingDeleter>(env_, callback_);
+
+    fileSource->setMaximumAmbientCacheSize(size_, [
+        //Keep a shared ptr to a global reference of the callback so they are not GC'd in the meanwhile
+        callback = std::make_shared<decltype(globalCallback)>(std::move(globalCallback))
+    ](std::exception_ptr exception) mutable {
+
+        // Reattach, the callback comes from a different thread
+        android::UniqueEnv env = android::AttachEnv();
+
+        if (exception) {
+            FileSource::FileSourceCallback::onError(*env, *callback, jni::Make<jni::String>(*env, mbgl::util::toString(exception)));
+        } else {
+            FileSource::FileSourceCallback::onSuccess(*env, *callback);
+        }
+    });
+}
+
 void FileSource::resume(jni::JNIEnv&) {
     if (!activationCounter) {
         activationCounter = optional<int>(1) ;
@@ -158,12 +235,30 @@ void FileSource::ResourcesCachePathChangeCallback::onError(jni::JNIEnv& env,
     callback.Call(env, method, message);
 }
 
+// FileSource::FileSourceCallback //
+
+void FileSource::FileSourceCallback::onSuccess(jni::JNIEnv& env,
+                                               const jni::Object<FileSource::FileSourceCallback>& callback) {
+    static auto& javaClass = jni::Class<FileSource::FileSourceCallback>::Singleton(env);
+    static auto method = javaClass.GetMethod<void ()>(env, "onSuccess");
+    callback.Call(env, method);
+}
+
+void FileSource::FileSourceCallback::onError(jni::JNIEnv& env,
+                                             const jni::Object<FileSource::FileSourceCallback>& callback,
+                                             const jni::String& message) {
+    static auto& javaClass = jni::Class<FileSource::FileSourceCallback>::Singleton(env);
+    static auto method = javaClass.GetMethod<void (jni::String)>(env, "onError");
+    callback.Call(env, method, message);
+}
+
 void FileSource::registerNative(jni::JNIEnv& env) {
     // Ensure the classes are cached. If they're requested for the
     // first time on a background thread, Android's class loader heuristics will fail.
     // https://developer.android.com/training/articles/perf-jni#faq_FindClass
     jni::Class<ResourceTransformCallback>::Singleton(env);
     jni::Class<ResourcesCachePathChangeCallback>::Singleton(env);
+    jni::Class<FileSourceCallback>::Singleton(env);
 
     static auto& javaClass = jni::Class<FileSource>::Singleton(env);
 
@@ -180,6 +275,10 @@ void FileSource::registerNative(jni::JNIEnv& env) {
         METHOD(&FileSource::setAPIBaseUrl, "setApiBaseUrl"),
         METHOD(&FileSource::setResourceTransform, "setResourceTransform"),
         METHOD(&FileSource::setResourceCachePath, "setResourceCachePath"),
+        METHOD(&FileSource::resetDatabase, "resetDatabase"),
+        METHOD(&FileSource::invalidateAmbientCache, "invalidateAmbientCache"),
+        METHOD(&FileSource::clearAmbientCache, "clearAmbientCache"),
+        METHOD(&FileSource::setMaximumAmbientCacheSize, "setMaximumAmbientCacheSize"),
         METHOD(&FileSource::resume, "activate"),
         METHOD(&FileSource::pause, "deactivate"),
         METHOD(&FileSource::isResumed, "isActivated")

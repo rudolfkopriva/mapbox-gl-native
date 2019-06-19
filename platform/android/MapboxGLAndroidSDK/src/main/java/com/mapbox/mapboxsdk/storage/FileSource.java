@@ -79,6 +79,15 @@ public class FileSource {
 
   }
 
+  @Keep
+  public interface FileSourceCallback {
+
+    void onSuccess();
+
+    void onError(@NonNull String message);
+
+  }
+
   // File source instance is kept alive after initialization
   private static FileSource INSTANCE;
 
@@ -403,6 +412,18 @@ public class FileSource {
 
   @Keep
   private native void setResourceCachePath(String path, ResourcesCachePathChangeCallback callback);
+
+  @Keep
+  public native void resetDatabase(@Nullable FileSourceCallback callback);
+
+  @Keep
+  public native void invalidateAmbientCache(@Nullable FileSourceCallback callback);
+
+  @Keep
+  public native void clearAmbientCache(@Nullable FileSourceCallback callback);
+
+  @Keep
+  public native void setMaximumAmbientCacheSize(long size, @Nullable FileSourceCallback callback);
 
   @Keep
   private native void initialize(String accessToken, String cachePath, AssetManager assetManager);

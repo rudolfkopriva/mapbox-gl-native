@@ -41,6 +41,14 @@ public:
                               const jni::String&);
     };
 
+    struct FileSourceCallback {
+        static constexpr auto Name() { return "com/mapbox/mapboxsdk/storage/FileSource$FileSourceCallback";}
+
+        static void onSuccess(jni::JNIEnv&, const jni::Object<FileSource::FileSourceCallback>&);
+
+        static void onError(jni::JNIEnv&, const jni::Object<FileSource::FileSourceCallback>&, const jni::String&);
+    };
+
     FileSource(jni::JNIEnv&, const jni::String&, const jni::String&, const jni::Object<AssetManager>&);
 
     ~FileSource();
@@ -54,6 +62,14 @@ public:
     void setResourceTransform(jni::JNIEnv&, const jni::Object<FileSource::ResourceTransformCallback>&);
 
     void setResourceCachePath(jni::JNIEnv&, const jni::String&, const jni::Object<FileSource::ResourcesCachePathChangeCallback>&);
+
+    void resetDatabase(jni::JNIEnv&, const jni::Object<FileSourceCallback>& callback_);
+
+    void invalidateAmbientCache(jni::JNIEnv&, const jni::Object<FileSourceCallback>& callback_);
+
+    void clearAmbientCache(jni::JNIEnv&, const jni::Object<FileSourceCallback>& callback_);
+
+    void setMaximumAmbientCacheSize(jni::JNIEnv&, const jni::jlong size, const jni::Object<FileSourceCallback>& callback_);
 
     void resume(jni::JNIEnv&);
 
