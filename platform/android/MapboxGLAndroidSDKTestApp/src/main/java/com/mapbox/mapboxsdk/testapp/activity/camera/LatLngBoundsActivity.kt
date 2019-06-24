@@ -1,15 +1,20 @@
 package com.mapbox.mapboxsdk.testapp.activity.camera
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.widget.Toast
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.FeatureCollection.fromJson
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
+import com.mapbox.mapboxsdk.location.modes.CameraMode
+import com.mapbox.mapboxsdk.location.modes.RenderMode
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.Style
 import com.mapbox.mapboxsdk.style.layers.Property.ICON_ANCHOR_CENTER
@@ -80,8 +85,30 @@ class LatLngBoundsActivity : AppCompatActivity() {
       .withImage("icon", BitmapUtils.getDrawableFromRes(this@LatLngBoundsActivity, R.drawable.ic_android)!!)
     ) {
       initBottomSheet()
+      activateLocationComponent(it)
       fab.setOnClickListener { bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED }
     }
+  }
+
+  @SuppressLint("MissingPermission")
+  private fun activateLocationComponent(style: Style) {
+    val locationComponent = mapboxMap.locationComponent
+
+    locationComponent.activateLocationComponent(
+      LocationComponentActivationOptions
+        .builder(this, style)
+        .useDefaultLocationEngine(true)
+        .build())
+
+    locationComponent.isLocationComponentEnabled = true
+    locationComponent.renderMode = RenderMode.COMPASS
+    locationComponent.cameraMode = CameraMode.TRACKING_GPS
+
+    mapboxMap.uiSettings.setAllGesturesEnabled(false)
+
+    locationComponent.addOnLocationClickListener { Toast.makeText(this, "Location clicked", Toast.LENGTH_SHORT).show() }
+
+    locationComponent.addOnLocationLongClickListener { Toast.makeText(this, "Location long clicked", Toast.LENGTH_SHORT).show() }
   }
 
   private fun initBottomSheet() {
@@ -90,10 +117,13 @@ class LatLngBoundsActivity : AppCompatActivity() {
       override fun onSlide(bottomSheet: View, slideOffset: Float) {
         val offset = convertSlideOffset(slideOffset)
         val bottomPadding = (peekHeight * offset).toInt()
+        mapboxMap.setPadding(0,0,0, bottomPadding)
 
-        mapboxMap.getCameraForLatLngBounds(bounds, createPadding(bottomPadding))?.let {
-          mapboxMap.cameraPosition = it
-        }
+
+//
+//        mapboxMap.getCameraForLatLngBounds(bounds, createPadding(bottomPadding))?.let {
+//          mapboxMap.cameraPosition = it
+//        }
       }
 
       override fun onStateChanged(bottomSheet: View, newState: Int) {
