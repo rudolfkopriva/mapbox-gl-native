@@ -381,34 +381,26 @@ const CGFloat MGLSnapshotterMinimumPixelSize = 64;
 
 - (void)drawAttributedSnapshot:(mbgl::MapSnapshotter::Attributions)attributions snapshotImage:(MGLImage *)mglImage pointForFn:(mbgl::MapSnapshotter::PointForFn)pointForFn latLngForFn:(mbgl::MapSnapshotter::LatLngForFn)latLngForFn {
     
-    // Process image watermark in a work queue
-    dispatch_queue_t workQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_queue_t resultQueue = self.resultQueue;
 
     // Capture scale and size by value to avoid accessing self from another thread
     CGFloat scale = self.options.scale;
-    CGSize size = self.options.size;
-
+    
     // pointForFn is a copyable std::function that captures state by value: see MapSnapshotter::Impl::snapshot
     __weak __typeof__(self) weakself = self;
 
-    dispatch_async(workQueue, ^{
-        // Call a class method to ensure we're not accidentally capturing self
-        MGLImage *compositedImage = [MGLMapSnapshotter drawAttributedSnapshotWorker:attributions snapshotImage:mglImage pointForFn:pointForFn latLngForFn:latLngForFn scale:scale size:size];
-
-        // Dispatch result to origin queue
-        dispatch_async(resultQueue, ^{
-            __typeof__(self) strongself = weakself;
-
-            if (strongself.completion) {
-                MGLMapSnapshot* snapshot = [[MGLMapSnapshot alloc] initWithImage:compositedImage
-                                                                           scale:scale
-                                                                      pointForFn:pointForFn
-                                                                     latLngForFn:latLngForFn];
-                strongself.completion(snapshot, nil);
-                strongself.completion = nil;
-            }
-        });
+    // Dispatch result to origin queue
+    dispatch_async(resultQueue, ^{
+        __typeof__(self) strongself = weakself;
+        
+        if (strongself.completion) {
+            MGLMapSnapshot* snapshot = [[MGLMapSnapshot alloc] initWithImage:mglImage
+                                                                       scale:scale
+                                                                  pointForFn:pointForFn
+                                                                 latLngForFn:latLngForFn];
+            strongself.completion(snapshot, nil);
+            strongself.completion = nil;
+        }
     });
 }
 

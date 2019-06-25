@@ -122,7 +122,7 @@ public:
 
         activeRequests.insert(request);
 
-        if (online) {
+        if (NetworkStatus::Get() == NetworkStatus::Status::Online) {
             request->request = httpFileSource.request(request->resource, callback);
         } else {
             Response response;
@@ -390,11 +390,11 @@ void OnlineFileRequest::schedule(optional<Timestamp> expires) {
     // Emulate a Connection error when the Offline mode is forced with
     // a really long timeout. The request will get re-triggered when
     // the NetworkStatus is set back to Online.
-    if (NetworkStatus::Get() == NetworkStatus::Status::Offline) {
-        failedRequestReason = Response::Error::Reason::Connection;
-        failedRequests = 1;
-        timeout = Duration::max();
-    }
+    //if (NetworkStatus::Get() == NetworkStatus::Status::Offline) {
+    //    failedRequestReason = Response::Error::Reason::Connection;
+    //    failedRequests = 1;
+    //    timeout = Duration::max();
+    //}
 
     timer.start(timeout, Duration::zero(), [&] {
         impl.activateOrQueueRequest(this);
@@ -448,7 +448,9 @@ void OnlineFileRequest::completed(Response response) {
         failedRequestReason = Response::Error::Reason::Success;
     }
 
-    schedule(response.expires);
+    if (response.error == nullptr || response.error->reason != Response::Error::Reason::Connection) {
+        schedule(response.expires);
+    }
 
     // Calling the callback may result in `this` being deleted. It needs to be done last,
     // and needs to make a local copy of the callback to ensure that it remains valid for

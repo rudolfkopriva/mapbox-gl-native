@@ -37,7 +37,9 @@ RasterDEMTile::~RasterDEMTile() = default;
 
 void RasterDEMTile::setError(std::exception_ptr err) {
     loaded = true;
+    pending = false;
     observer->onTileError(*this, err);
+    observer->onTileChanged(*this);
 }
 
 void RasterDEMTile::setMetadata(optional<Timestamp> modified_, optional<Timestamp> expires_) {

@@ -76,7 +76,9 @@ void GeometryTile::markObsolete() {
 
 void GeometryTile::setError(std::exception_ptr err) {
     loaded = true;
+    pending = false;
     observer->onTileError(*this, err);
+    observer->onTileChanged(*this);
 }
 
 void GeometryTile::setData(std::unique_ptr<const GeometryTileData> data_) {

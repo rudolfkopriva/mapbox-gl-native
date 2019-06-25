@@ -26,7 +26,9 @@ RasterTile::~RasterTile() = default;
 
 void RasterTile::setError(std::exception_ptr err) {
     loaded = true;
+    pending = false;
     observer->onTileError(*this, err);
+    observer->onTileChanged(*this);
 }
 
 void RasterTile::setMetadata(optional<Timestamp> modified_, optional<Timestamp> expires_) {

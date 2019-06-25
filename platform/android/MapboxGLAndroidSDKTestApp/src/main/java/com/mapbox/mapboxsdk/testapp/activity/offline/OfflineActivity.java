@@ -5,6 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -21,12 +23,15 @@ import com.mapbox.mapboxsdk.offline.OfflineRegion;
 import com.mapbox.mapboxsdk.offline.OfflineRegionError;
 import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
+import com.mapbox.mapboxsdk.snapshotter.MapSnapshotter;
 import com.mapbox.mapboxsdk.testapp.R;
+import com.mapbox.mapboxsdk.testapp.activity.snapshot.MapSnapshotterActivity;
 import com.mapbox.mapboxsdk.testapp.model.other.OfflineDownloadRegionDialog;
 import com.mapbox.mapboxsdk.testapp.model.other.OfflineListRegionsDialog;
 import com.mapbox.mapboxsdk.testapp.utils.OfflineUtils;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import timber.log.Timber;
 
@@ -37,7 +42,7 @@ import timber.log.Timber;
  * </p>
  */
 public class OfflineActivity extends AppCompatActivity
-  implements OfflineDownloadRegionDialog.DownloadRegionDialogListener {
+  implements OfflineDownloadRegionDialog.DownloadRegionDialogListener, MapboxMap.OnCameraIdleListener {
 
   // JSON encoding/decoding
   public static final String JSON_CHARSET = "UTF-8";
@@ -74,6 +79,14 @@ public class OfflineActivity extends AppCompatActivity
     Boolean connected = Mapbox.isConnected();
     Timber.d("Mapbox is connected: %s", connected);
 
+    ImageView imgView = (ImageView)OfflineActivity.this.findViewById(R.id.snapshotimage);
+    imgView.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        onCameraIdle();
+      }
+    });
+
     // Set up map
     mapView = (MapView) findViewById(R.id.mapView);
     mapView.onCreate(savedInstanceState);
@@ -84,11 +97,12 @@ public class OfflineActivity extends AppCompatActivity
       // Set initial position to UNHQ in NYC
       mapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
         new CameraPosition.Builder()
-          .target(new LatLng(40.749851, -73.967966))
+          .target(new LatLng(39.84123318814444, -104.98331175316245))
           .zoom(14)
           .bearing(0)
           .tilt(0)
           .build()));
+      mapboxMap.addOnCameraIdleListener(this);
     });
 
     // The progress bar
@@ -316,5 +330,40 @@ public class OfflineActivity extends AppCompatActivity
 
     // Show a toast
     Toast.makeText(OfflineActivity.this, message, Toast.LENGTH_LONG).show();
+  }
+
+  @Override
+  public void onCameraIdle() {
+    ImageView snapshotView = (ImageView)OfflineActivity.this.findViewById(R.id.snapshotimage);
+    long startTime = System.nanoTime();
+    // Define the dimensions
+    MapSnapshotter.Options options = new MapSnapshotter.Options(
+            (int)(snapshotView.getMeasuredWidth() / getResources().getDisplayMetrics().density),
+            (int)(snapshotView.getMeasuredHeight() / getResources().getDisplayMetrics().density)
+    )
+            // Optionally the pixel ratio
+            .withPixelRatio(1)
+
+            // Optionally the style
+            .withStyle(STYLE_URL)
+
+            .withLogo(false)
+            .withRegion(mapboxMap.getProjection().getVisibleRegion().latLngBounds)
+
+            .withCameraPosition(new CameraPosition.Builder()
+                    .target(mapboxMap.getCameraPosition().target)
+                    .bearing(0)
+                    .tilt(0)
+                    .zoom(mapboxMap.getCameraPosition().zoom)
+                    .build());
+
+    MapSnapshotter snapshotter = new MapSnapshotter(OfflineActivity.this, options);
+
+    snapshotter.start(snapshot -> {
+      long endTime = System.nanoTime();
+      long duration = (long)((double)(endTime - startTime) / 1000000.0D);
+      snapshotView.setImageBitmap(snapshot.getBitmap());
+      Toast.makeText(OfflineActivity.this, String.format(Locale.getDefault(), "Snapshot taken in %d ms", duration), Toast.LENGTH_LONG).show();
+    });
   }
 }

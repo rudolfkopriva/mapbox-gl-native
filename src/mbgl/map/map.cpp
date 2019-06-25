@@ -54,10 +54,10 @@ void Map::renderStill(StillImageCallback callback) {
         return;
     }
 
-    if (impl->style->impl->getLastError()) {
+    /*if (impl->style->impl->getLastError()) {
         callback(impl->style->impl->getLastError());
         return;
-    }
+    }*/
 
     impl->stillImageRequest = std::make_unique<StillImageRequest>(std::move(callback));
 
