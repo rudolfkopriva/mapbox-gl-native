@@ -458,16 +458,18 @@ public class MapSnapshotter {
 
   private void drawAttribution(@NonNull MapSnapshot mapSnapshot, @NonNull Canvas canvas,
                                @NonNull AttributionMeasure measure, AttributionLayout layout) {
-    // draw attribution
-    PointF anchorPoint = layout.getAnchorPoint();
-    if (anchorPoint != null) {
-      drawAttribution(canvas, measure, anchorPoint);
-    } else {
-      Bitmap snapshot = mapSnapshot.getBitmap();
-      Logger.e(TAG, String.format("Could not generate attribution for snapshot size: %s x %s."
-          + " You are required to provide your own attribution for the used sources: %s",
-        snapshot.getWidth(), snapshot.getHeight(), mapSnapshot.getAttributions())
-      );
+    if (mapSnapshot.isShowLogo()) {
+      // draw attribution
+      PointF anchorPoint = layout.getAnchorPoint();
+      if (anchorPoint != null) {
+        drawAttribution(canvas, measure, anchorPoint);
+      } else {
+        Bitmap snapshot = mapSnapshot.getBitmap();
+        Logger.e(TAG, String.format("Could not generate attribution for snapshot size: %s x %s."
+                        + " You are required to provide your own attribution for the used sources: %s",
+                snapshot.getWidth(), snapshot.getHeight(), mapSnapshot.getAttributions())
+        );
+      }
     }
   }
 
