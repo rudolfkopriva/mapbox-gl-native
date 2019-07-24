@@ -223,9 +223,9 @@ public class OfflineActivity extends AppCompatActivity
     startProgress();
 
     // Definition
-    LatLngBounds bounds = mapboxMap.getProjection().getVisibleRegion().latLngBounds;
-    double minZoom = mapboxMap.getCameraPosition().zoom;
-    double maxZoom = mapboxMap.getMaxZoomLevel();
+    LatLngBounds bounds = LatLngBounds.from(41.69818780522522,-108.40637370944025,40.22012519047907,-109.69412103295325);
+    double minZoom = 7;
+    double maxZoom = 13;
     float pixelRatio = this.getResources().getDisplayMetrics().density;
     OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
       STYLE_URL, bounds, minZoom, maxZoom, pixelRatio);
@@ -338,23 +338,24 @@ public class OfflineActivity extends AppCompatActivity
     long startTime = System.nanoTime();
     // Define the dimensions
     MapSnapshotter.Options options = new MapSnapshotter.Options(
-            (int)(snapshotView.getMeasuredWidth() / getResources().getDisplayMetrics().density),
-            (int)(snapshotView.getMeasuredHeight() / getResources().getDisplayMetrics().density)
+            //(int)(snapshotView.getMeasuredWidth() / getResources().getDisplayMetrics().density),
+            //(int)(snapshotView.getMeasuredHeight() / getResources().getDisplayMetrics().density)
+            800/2,1216/2
     )
             // Optionally the pixel ratio
-            .withPixelRatio(1)
+            .withPixelRatio(this.getResources().getDisplayMetrics().density)
 
             // Optionally the style
             .withStyle(STYLE_URL)
 
             .withLogo(false)
-            .withRegion(mapboxMap.getProjection().getVisibleRegion().latLngBounds)
+            .withRegion(LatLngBounds.from(41.69818780522522,-108.40637370944025,40.22012519047907,-109.69412103295325))
 
             .withCameraPosition(new CameraPosition.Builder()
-                    .target(mapboxMap.getCameraPosition().target)
+                    .target(new LatLng(40.95915649785214,-109.05024737119675))
                     .bearing(0)
                     .tilt(0)
-                    .zoom(mapboxMap.getCameraPosition().zoom)
+                    .zoom(8.358079)
                     .build());
 
     MapSnapshotter snapshotter = new MapSnapshotter(OfflineActivity.this, options);

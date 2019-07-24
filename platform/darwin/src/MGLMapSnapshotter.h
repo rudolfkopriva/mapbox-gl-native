@@ -5,6 +5,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+MGL_EXPORT
+@interface MGLAttribution : NSObject
+
+@property (nonatomic, strong) NSURL* URL;
+@property (nonatomic, strong) NSAttributedString* title;
+@property bool feedbackLink;
+
+@end
+
 /**
  The options to use when creating images with the `MGLMapSnapshotter`.
  */
@@ -94,6 +103,9 @@ MGL_EXPORT
  The image of the map’s content.
  */
 @property (nonatomic, readonly) UIImage *image;
+
+@property (nonatomic, strong) NSArray<MGLAttribution*>* attributions;
+
 #else
 /**
  Converts the specified map coordinate to a point in the coordinate space of the
@@ -217,6 +229,12 @@ MGL_EXPORT
  Indicates whether a snapshot is currently being generated.
  */
 @property (nonatomic, readonly, getter=isLoading) BOOL loading;
+
+-(void)recycle;
+
+-(BOOL)isTerminated;
+
++ (MGLImage *)mapboxLongStyleLogo;
 
 @end
 

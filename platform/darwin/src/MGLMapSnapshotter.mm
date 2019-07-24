@@ -32,6 +32,21 @@
 const CGPoint MGLLogoImagePosition = CGPointMake(8, 8);
 const CGFloat MGLSnapshotterMinimumPixelSize = 64;
 
+@implementation MGLAttribution
+
+-(instancetype)initWithAttributionInfo:(MGLAttributionInfo*) attributionInfo {
+    self = [super init];
+    if (self)
+    {
+        self.URL = attributionInfo.URL;
+        self.title = attributionInfo.title;
+        self.feedbackLink = attributionInfo.feedbackLink;
+    }
+    return self;
+}
+
+@end
+
 @implementation MGLMapSnapshotOptions
 
 - (instancetype _Nonnull)initWithStyleURL:(nullable NSURL *)styleURL camera:(MGLMapCamera *)camera size:(CGSize)size
@@ -398,6 +413,12 @@ const CGFloat MGLSnapshotterMinimumPixelSize = 64;
                                                                        scale:scale
                                                                   pointForFn:pointForFn
                                                                  latLngForFn:latLngForFn];
+            NSMutableArray<MGLAttribution*>* mglAttributions = [[NSMutableArray<MGLAttribution*> alloc] initWithCapacity:0];
+            NSArray* attributionInfoArray = [MGLMapSnapshotter generateAttributionInfos:attributions];
+            for (MGLAttributionInfo* attributionInfo in attributionInfoArray) {
+                [mglAttributions addObject:[[MGLAttribution alloc] initWithAttributionInfo:attributionInfo]];
+            }
+            snapshot.attributions = mglAttributions;
             strongself.completion(snapshot, nil);
             strongself.completion = nil;
         }
@@ -549,6 +570,17 @@ const CGFloat MGLSnapshotterMinimumPixelSize = 64;
     _mbglMapSnapshotter.reset();
 }
 
+-(void)recycle
+{
+    _snapshotCallback.reset();
+    self.completion = nil;
+}
+
+-(BOOL)isTerminated
+{
+    return self.terminated;
+}
+
 + (void)completeWithErrorCode:(MGLErrorCode)errorCode description:(nonnull NSString*)description onQueue:(dispatch_queue_t)queue completion:(MGLMapSnapshotCompletionHandler)completion {
     // The snapshot hasn't completed, so we should alert the caller
     if (completion && queue) {
@@ -606,17 +638,20 @@ const CGFloat MGLSnapshotterMinimumPixelSize = 64;
     if (!MGLCoordinateBoundsIsEmpty(options.coordinateBounds)) {
         coordinateBounds = MGLLatLngBoundsFromCoordinateBounds(options.coordinateBounds);
     }
-    
-    // App-global configuration
-    MGLRendererConfiguration* config = [MGLRendererConfiguration currentConfiguration];
 
-    mbgl::ResourceOptions resourceOptions;
-    resourceOptions.withCachePath([[MGLOfflineStorage sharedOfflineStorage] mbglCachePath])
-                   .withAssetPath([NSBundle mainBundle].resourceURL.path.UTF8String);
-
-    // Create the snapshotter
-    _mbglMapSnapshotter = std::make_unique<mbgl::MapSnapshotter>(
-        style, size, pixelRatio, cameraOptions, coordinateBounds, config.cacheDir, config.localFontFamilyName, resourceOptions);
+    if (_mbglMapSnapshotter == nil) {
+        // Create the snapshotter
+        // App-global configuration
+        MGLRendererConfiguration* config = [MGLRendererConfiguration currentConfiguration];
+        
+        mbgl::ResourceOptions resourceOptions;
+        resourceOptions.withCachePath([[MGLOfflineStorage sharedOfflineStorage] mbglCachePath])
+        .withAssetPath([NSBundle mainBundle].resourceURL.path.UTF8String);
+        _mbglMapSnapshotter = std::make_unique<mbgl::MapSnapshotter>(
+                                                                     style, size, pixelRatio, cameraOptions, coordinateBounds, config.cacheDir, config.localFontFamilyName, resourceOptions);
+    } else {
+        _mbglMapSnapshotter->setCameraOptions(cameraOptions);
+    }
 }
 
 @end
