@@ -326,6 +326,10 @@ MGL_EXPORT
  */
 - (void)reloadPacks;
 
+-(BOOL)repeatDownloadOnError;
+
+-(void)setRepeatDownloadOnError:(BOOL)enabled;
+
 /**
  Sets the maximum number of Mapbox-hosted tiles that may be downloaded and
  stored on the current device.

@@ -1,7 +1,7 @@
 #include <mbgl/storage/online_file_source.hpp>
 #include <mbgl/storage/http_file_source.hpp>
 #include <mbgl/storage/network_status.hpp>
-
+#include <mbgl/storage/default_file_source.hpp>
 #include <mbgl/storage/resource_transform.hpp>
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/logging.hpp>
@@ -448,7 +448,7 @@ void OnlineFileRequest::completed(Response response) {
         failedRequestReason = Response::Error::Reason::Success;
     }
 
-    if (response.error == nullptr || response.error->reason != Response::Error::Reason::Connection) {
+    if (response.error == nullptr || response.error->reason != Response::Error::Reason::Connection || repeatDownloadOnError) {
         schedule(response.expires);
     }
 
