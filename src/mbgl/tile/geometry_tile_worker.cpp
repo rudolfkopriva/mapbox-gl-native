@@ -382,7 +382,7 @@ void GeometryTileWorker::parse() {
                 if (!filter(expression::EvaluationContext { static_cast<float>(this->id.overscaledZ), feature.get() }))
                     continue;
 
-                GeometryCollection geometries = feature->getGeometries();
+                const GeometryCollection& geometries = feature->getGeometries();
                 bucket->addFeature(*feature, geometries, {}, PatternLayerMap ());
                 featureIndex->insert(geometries, i, sourceLayerID, leaderImpl.id);
             }
@@ -460,12 +460,12 @@ void GeometryTileWorker::finalizeLayout() {
                        " Canonical: " << static_cast<int>(id.canonical.z) << "/" << id.canonical.x << "/" << id.canonical.y <<
                        " Time");
 
-    parent.invoke(&GeometryTile::onLayout, GeometryTile::LayoutResult {
+    parent.invoke(&GeometryTile::onLayout, std::make_shared<GeometryTile::LayoutResult>(
         std::move(renderData),
         std::move(featureIndex),
         std::move(glyphAtlasImage),
         std::move(iconAtlas)
-    }, correlationID);
+    ), correlationID);
 }
 
 } // namespace mbgl

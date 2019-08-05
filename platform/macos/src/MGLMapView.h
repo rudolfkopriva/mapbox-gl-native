@@ -84,7 +84,7 @@ MGL_EXPORT IB_DESIGNABLE
 
  @param frame The frame for the view, measured in points.
  @param styleURL URL of the map style to display. The URL may be a full HTTP or
-    HTTPS URL, a Mapbox URL indicating the style’s map ID
+    HTTPS URL, a Mapbox style URL
     (`mapbox://styles/<user>/<style>`), or a path to a local file relative to
     the application’s resource path. Specify `nil` for the default style.
  @return An initialized map view.
@@ -130,8 +130,8 @@ MGL_EXPORT IB_DESIGNABLE
 /**
  URL of the style currently displayed in the receiver.
 
- The URL may be a full HTTP or HTTPS URL, a Mapbox URL indicating the style’s
- map ID (`mapbox://styles/<user>/<style>`), or a path to a local file relative
+ The URL may be a full HTTP or HTTPS URL, a Mapbox
+ style URL (`mapbox://styles/<user>/<style>`), or a path to a local file relative
  to the application’s resource path.
 
  If you set this property to `nil`, the receiver will use the default style and
@@ -626,8 +626,8 @@ MGL_EXPORT IB_DESIGNABLE
 @property (nonatomic, assign) NSEdgeInsets contentInsets;
 
 /**
- Sets the distance from the edges of the map view’s frame to the edges of the
- map view’s logical viewport, with an optional transition animation.
+ Deprecated. Sets the distance from the edges of the map view’s frame to the
+ edges of the map view’s logical viewport, with an optional transition animation.
 
  When the value of this property is equal to `NSEdgeInsetsZero`, viewport
  properties such as `centerCoordinate` assume a viewport that matches the map
@@ -646,7 +646,7 @@ MGL_EXPORT IB_DESIGNABLE
     the content insets or `NO` if you want the map to inset the content
     immediately.
  */
-- (void)setContentInsets:(NSEdgeInsets)contentInsets animated:(BOOL)animated;
+- (void)setContentInsets:(NSEdgeInsets)contentInsets animated:(BOOL)animated __attribute__((deprecated("Use `-setContentInsets:animated:completionHandler:` instead.")));
 
 /**
  Sets the distance from the edges of the map view’s frame to the edges of the

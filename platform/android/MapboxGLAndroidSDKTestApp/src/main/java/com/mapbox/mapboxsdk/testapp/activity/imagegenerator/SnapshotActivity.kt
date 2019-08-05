@@ -40,7 +40,7 @@ class SnapshotActivity : AppCompatActivity(), OnMapReadyCallback {
 
   override fun onMapReady(map: MapboxMap) {
     mapboxMap = map
-    mapboxMap.setStyle(Style.Builder().fromUrl(Style.OUTDOORS)) { mapView.addOnDidFinishRenderingFrameListener(idleListener) }
+    mapboxMap.setStyle(Style.Builder().fromUri(Style.OUTDOORS)) { mapView.addOnDidFinishRenderingFrameListener(idleListener) }
   }
 
   override fun onStart() {
@@ -83,7 +83,7 @@ class SnapshotActivity : AppCompatActivity(), OnMapReadyCallback {
   }
 
   companion object {
-    const val TAG ="Mbgl-SnapshotActivity"
+    const val TAG = "Mbgl-SnapshotActivity"
     const val LOG_MESSAGE = "OnSnapshot"
   }
 }

@@ -19,18 +19,21 @@ target_link_libraries(mbgl-core PRIVATE
     wagyu
 )
 
+# linux uses ICU from mason, other platforms use vendored ICU
+if(NOT MBGL_PLATFORM STREQUAL "linux")
+    set(ICU_LIBRARY "icu")
+endif()
+
 # FIXME: We should not leak these many
 # libraries in our public interface.
 target_link_libraries(mbgl-core PUBLIC
     boost
+    mapbox-base
     geojson.hpp
-    geometry.hpp
-    icu
-    optional
+    ${ICU_LIBRARY}
     polylabel
     protozero
     rapidjson
-    variant
     vector-tile
 )
 

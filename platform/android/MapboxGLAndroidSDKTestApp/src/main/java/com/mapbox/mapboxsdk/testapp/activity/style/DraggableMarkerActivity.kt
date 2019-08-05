@@ -70,7 +70,7 @@ class DraggableMarkerActivity : AppCompatActivity() {
 
       mapboxMap.setStyle(
         Style.Builder()
-          .fromUrl(Style.MAPBOX_STREETS)
+          .fromUri(Style.MAPBOX_STREETS)
           .withImage(markerImageId, IconFactory.getInstance(this).defaultMarker().bitmap)
           .withSource(source)
           .withLayer(layer)
@@ -104,7 +104,7 @@ class DraggableMarkerActivity : AppCompatActivity() {
       }
 
       draggableSymbolsManager = DraggableSymbolsManager(
-        mapView, mapboxMap, featureCollection, source, layerId, 0, actionBarHeight)
+        mapView, mapboxMap, featureCollection, source, layerId, actionBarHeight, 0)
 
       // Adding symbol drag listeners
       draggableSymbolsManager?.addOnSymbolDragListener(object : DraggableSymbolsManager.OnSymbolDragListener {
@@ -171,11 +171,17 @@ class DraggableMarkerActivity : AppCompatActivity() {
    * @param touchAreaMaxX maximum value of X-axis motion event
    * @param touchAreaMaxY maximum value of Y-axis motion event
    */
-  class DraggableSymbolsManager(mapView: MapView, private val mapboxMap: MapboxMap,
-                                private val symbolsCollection: FeatureCollection,
-                                private val symbolsSource: GeoJsonSource, private val symbolsLayerId: String,
-                                private val touchAreaShiftX: Int = 0, private val touchAreaShiftY: Int = 0,
-                                private val touchAreaMaxX: Int = mapView.width, private val touchAreaMaxY: Int = mapView.height) {
+  class DraggableSymbolsManager(
+    mapView: MapView,
+    private val mapboxMap: MapboxMap,
+    private val symbolsCollection: FeatureCollection,
+    private val symbolsSource: GeoJsonSource,
+    private val symbolsLayerId: String,
+    private val touchAreaShiftY: Int = 0,
+    private val touchAreaShiftX: Int = 0,
+    private val touchAreaMaxX: Int = mapView.width,
+    private val touchAreaMaxY: Int = mapView.height
+  ) {
 
     private val androidGesturesManager: AndroidGesturesManager = AndroidGesturesManager(mapView.context, false)
     private var draggedSymbolId: String? = null

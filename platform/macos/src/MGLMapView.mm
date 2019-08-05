@@ -978,6 +978,14 @@ public:
     self.needsDisplay = YES;
 }
 
+- (BOOL)shouldRemoveStyleImage:(NSString *)imageName {
+    if ([self.delegate respondsToSelector:@selector(mapView:shouldRemoveStyleImage:)]) {
+        return [self.delegate mapView:self shouldRemoveStyleImage:imageName];
+    }
+    
+    return YES;
+}
+
 #pragma mark Printing
 
 - (void)print:(__unused id)sender {
@@ -1431,8 +1439,7 @@ public:
 }
 
 - (void)setContentInsets:(NSEdgeInsets)contentInsets {
-    MGLLogDebug(@"Setting contentInset: %@", MGLStringFromNSEdgeInsets(contentInsets));
-    [self setContentInsets:contentInsets animated:NO];
+    [self setContentInsets:contentInsets animated:NO completionHandler:nil];
 }
 
 - (void)setContentInsets:(NSEdgeInsets)contentInsets animated:(BOOL)animated {

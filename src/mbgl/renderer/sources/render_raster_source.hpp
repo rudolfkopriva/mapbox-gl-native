@@ -5,35 +5,32 @@
 
 namespace mbgl {
 
-class RenderRasterSource final : public RenderTileSource {
+class RenderRasterSource final : public RenderTileSetSource {
 public:
     explicit RenderRasterSource(Immutable<style::RasterSource::Impl>);
 
-    void update(Immutable<style::Source::Impl>,
-                const std::vector<Immutable<style::LayerProperties>>&,
-                bool needsRendering,
-                bool needsRelayout,
-                const TileParameters&) final;
+private:
     void prepare(const SourcePrepareParameters&) final;
 
     std::unordered_map<std::string, std::vector<Feature>>
     queryRenderedFeatures(const ScreenLineString& geometry,
                           const TransformState& transformState,
-                          const std::vector<const RenderLayer*>& layers,
+                          const std::unordered_map<std::string, const RenderLayer*>& layers,
                           const RenderedQueryOptions& options,
                           const mat4& projMatrix) const override;
 
     std::vector<Feature>
     querySourceFeatures(const SourceQueryOptions&) const override;
 
-private:
-    const style::RasterSource::Impl& impl() const;
-    optional<Tileset> tileset;
-};
+    // RenderTileSetSource overrides
+    void updateInternal(const Tileset&,
+                        const std::vector<Immutable<style::LayerProperties>>&,
+                        bool needsRendering,
+                        bool needsRelayout,
+                        const TileParameters&) override;
+    const optional<Tileset>& getTileset() const override;
 
-template <>
-inline bool RenderSource::is<RenderRasterSource>() const {
-    return baseImpl->type == style::SourceType::Raster;
-}
+    const style::RasterSource::Impl& impl() const;
+};
 
 } // namespace mbgl

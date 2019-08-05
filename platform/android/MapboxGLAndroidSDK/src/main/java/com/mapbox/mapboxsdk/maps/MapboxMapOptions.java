@@ -14,6 +14,7 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.Gravity;
+
 import com.mapbox.mapboxsdk.R;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.constants.MapboxConstants;
@@ -68,7 +69,7 @@ public class MapboxMapOptions implements Parcelable {
 
   private boolean prefetchesTiles = true;
   private boolean zMediaOverlay = false;
-  private String localIdeographFontFamily = "sans-serif";
+  private String localIdeographFontFamily;
 
   private String apiBaseUri;
 
@@ -136,7 +137,18 @@ public class MapboxMapOptions implements Parcelable {
   }
 
   /**
-   * Creates a MapboxMapsOptions from the attribute set.s
+   * Creates a default MapboxMapsOptions from a given context.
+   *
+   * @param context Context related to a map view.
+   * @return the MapboxMapOptions created from attributes
+   */
+  @NonNull
+  public static MapboxMapOptions createFromAttributes(@NonNull Context context) {
+    return createFromAttributes(context, null);
+  }
+
+  /**
+   * Creates a MapboxMapsOptions from the attribute set.
    *
    * @param context Context related to a map view.
    * @param attrs   Attributeset containing configuration
@@ -234,8 +246,14 @@ public class MapboxMapOptions implements Parcelable {
         typedArray.getBoolean(R.styleable.mapbox_MapView_mapbox_enableTilePrefetch, true));
       mapboxMapOptions.renderSurfaceOnTop(
         typedArray.getBoolean(R.styleable.mapbox_MapView_mapbox_enableZMediaOverlay, false));
-      mapboxMapOptions.localIdeographFontFamily(
-        typedArray.getString(R.styleable.mapbox_MapView_mapbox_localIdeographFontFamily));
+
+      String localIdeographFontFamily =
+        typedArray.getString(R.styleable.mapbox_MapView_mapbox_localIdeographFontFamily);
+      if (localIdeographFontFamily == null) {
+        localIdeographFontFamily = "sans-serif";
+      }
+      mapboxMapOptions.localIdeographFontFamily(localIdeographFontFamily);
+
       mapboxMapOptions.pixelRatio(
         typedArray.getFloat(R.styleable.mapbox_MapView_mapbox_pixelRatio, 0));
       mapboxMapOptions.foregroundLoadColor(

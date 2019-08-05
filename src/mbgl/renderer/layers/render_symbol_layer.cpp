@@ -113,7 +113,7 @@ void drawIcon(const DrawFn& draw,
               const PaintParameters& parameters) {
     auto& bucket = static_cast<SymbolBucket&>(*renderData.bucket);
     const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData.layerProperties);
-    const auto& layout = bucket.layout;
+    const auto& layout = *bucket.layout;
     auto values = iconPropertyValues(evaluated, layout);
     const auto& paintPropertyValues = RenderSymbolLayer::iconPaintProperties(evaluated);
 
@@ -184,7 +184,7 @@ void drawText(const DrawFn& draw,
               const PaintParameters& parameters) {
     auto& bucket = static_cast<SymbolBucket&>(*renderData.bucket);
     const auto& evaluated = getEvaluated<SymbolLayerProperties>(renderData.layerProperties);
-    const auto& layout = bucket.layout;
+    const auto& layout = *bucket.layout;
 
     const gfx::TextureBinding textureBinding{ tile.getGlyphAtlasTexture().getResource(),
                                               gfx::TextureFilterType::Linear };
@@ -262,8 +262,8 @@ void RenderSymbolLayer::evaluate(const PropertyEvaluationParameters& parameters)
 
     passes = ((evaluated.get<style::IconOpacity>().constantOr(1) > 0 && hasIconOpacity && iconSize > 0)
               || (evaluated.get<style::TextOpacity>().constantOr(1) > 0 && hasTextOpacity && textSize > 0))
-             ? RenderPass::Translucent | RenderPass::Upload : RenderPass::None;
-
+             ? RenderPass::Translucent : RenderPass::None;
+    properties->renderPasses = mbgl::underlying_type(passes);
     evaluatedProperties = std::move(properties);
 }
 
@@ -276,6 +276,7 @@ bool RenderSymbolLayer::hasCrossfade() const {
 }
 
 void RenderSymbolLayer::render(PaintParameters& parameters) {
+    assert(renderTiles);
     if (parameters.pass == RenderPass::Opaque) {
         return;
     }
@@ -348,8 +349,8 @@ void RenderSymbolLayer::render(PaintParameters& parameters) {
         );
     };
 
-    for (const RenderTile& tile : renderTiles) {
-        const LayerRenderData* renderData = tile.getLayerRenderData(*baseImpl);
+    for (const RenderTile& tile : *renderTiles) {
+        const LayerRenderData* renderData = getRenderDataForPass(tile, parameters.pass);
         if (!renderData) {
             continue;
         }
@@ -404,10 +405,10 @@ void RenderSymbolLayer::render(PaintParameters& parameters) {
                     uniforms::extrude_scale::Value( extrudeScale ),
                     uniforms::camera_to_center_distance::Value( parameters.state.getCameraToCenterDistance() )
                 },
-                *bucket.collisionBox.vertexBuffer,
-                *bucket.collisionBox.dynamicVertexBuffer,
-                *bucket.collisionBox.indexBuffer,
-                bucket.collisionBox.segments,
+                *bucket.collisionBox->vertexBuffer,
+                *bucket.collisionBox->dynamicVertexBuffer,
+                *bucket.collisionBox->indexBuffer,
+                bucket.collisionBox->segments,
                 paintAttributeData,
                 properties,
                 CollisionBoxProgram::TextureBindings{},
@@ -442,10 +443,10 @@ void RenderSymbolLayer::render(PaintParameters& parameters) {
                     uniforms::overscale_factor::Value( float(tile.getOverscaledTileID().overscaleFactor()) ),
                     uniforms::camera_to_center_distance::Value( parameters.state.getCameraToCenterDistance() )
                 },
-                *bucket.collisionCircle.vertexBuffer,
-                *bucket.collisionCircle.dynamicVertexBuffer,
-                *bucket.collisionCircle.indexBuffer,
-                bucket.collisionCircle.segments,
+                *bucket.collisionCircle->vertexBuffer,
+                *bucket.collisionCircle->dynamicVertexBuffer,
+                *bucket.collisionCircle->indexBuffer,
+                bucket.collisionCircle->segments,
                 paintAttributeData,
                 properties,
                 CollisionCircleProgram::TextureBindings{},
@@ -493,26 +494,18 @@ style::TextPaintProperties::PossiblyEvaluated RenderSymbolLayer::textPaintProper
 }
 
 void RenderSymbolLayer::prepare(const LayerPrepareParameters& params) {
-    renderTiles = params.source->getRenderedTiles();
-    const auto comp = [bearing = params.state.getBearing()](const RenderTile& a, const RenderTile& b) {
-        Point<float> pa(a.id.canonical.x, a.id.canonical.y);
-        Point<float> pb(b.id.canonical.x, b.id.canonical.y);
-
-        auto par = util::rotate(pa, bearing);
-        auto pbr = util::rotate(pb, bearing);
-
-        return std::tie(b.id.canonical.z, par.y, par.x) < std::tie(a.id.canonical.z, pbr.y, pbr.x);
-    };
-    // Sort symbol tiles in opposite y position, so tiles with overlapping symbols are drawn
-    // on top of each other, with lower symbols being drawn on top of higher symbols.
-    std::sort(renderTiles.begin(), renderTiles.end(), comp);
+    renderTiles = params.source->getRenderTilesSortedByYPosition();
+    addRenderPassesFromTiles();
 
     placementData.clear();
-    for (RenderTile& renderTile : renderTiles) {
+    for (const RenderTile& renderTile : *renderTiles) {
         auto* bucket = static_cast<SymbolBucket*>(renderTile.getBucket(*baseImpl));
         if (bucket && bucket->bucketLeaderID == getID()) {
             // Only place this layer if it's the "group leader" for the bucket
-            placementData.push_back({*bucket, renderTile});
+            const Tile* tile = params.source->getRenderedTile(renderTile.id);
+            assert(tile);
+            assert(tile->kind == Tile::Kind::Geometry);
+            placementData.push_back({*bucket, renderTile, static_cast<const GeometryTile*>(tile)->getFeatureIndex()});
         }
     }
 }

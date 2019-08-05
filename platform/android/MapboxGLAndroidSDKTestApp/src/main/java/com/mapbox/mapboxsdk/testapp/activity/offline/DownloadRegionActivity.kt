@@ -14,10 +14,10 @@ import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.maps.Style
 import com.mapbox.mapboxsdk.offline.*
 import com.mapbox.mapboxsdk.testapp.R
-import kotlinx.android.synthetic.main.activity_region_download.*
-import timber.log.Timber
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlinx.android.synthetic.main.activity_region_download.*
+import timber.log.Timber
 
 /**
  * Example showcasing how to download an offline region headless, allows to test pausing and resuming the download.
@@ -145,7 +145,8 @@ class DownloadRegionActivity : AppCompatActivity(), OfflineRegion.OfflineRegionO
       }
 
       if (status.completedResourceCount > status.requiredResourceCount &&
-        previousCompletedResourceCount <= status.requiredResourceCount) {
+        previousCompletedResourceCount <= status.requiredResourceCount
+      ) {
         logMessage("FAILURE! Completed > required")
       }
     }
@@ -279,11 +280,9 @@ class DownloadRegionActivity : AppCompatActivity(), OfflineRegion.OfflineRegionO
       }
 
       override fun onStartTrackingTouch(seekBar: SeekBar) {
-
       }
 
       override fun onStopTrackingTouch(seekBar: SeekBar) {
-
       }
     })
 
@@ -293,17 +292,19 @@ class DownloadRegionActivity : AppCompatActivity(), OfflineRegion.OfflineRegionO
       }
 
       override fun onStartTrackingTouch(seekBar: SeekBar) {
-
       }
 
       override fun onStopTrackingTouch(seekBar: SeekBar) {
-
       }
     })
   }
 
-  private fun validCoordinates(latitudeNorth: Double, longitudeEast: Double, latitudeSouth: Double,
-                               longitudeWest: Double): Boolean {
+  private fun validCoordinates(
+    latitudeNorth: Double,
+    longitudeEast: Double,
+    latitudeSouth: Double,
+    longitudeWest: Double
+  ): Boolean {
     if (latitudeNorth < -90 || latitudeNorth > 90) {
       return false
     } else if (longitudeEast < -180 || longitudeEast > 180) {

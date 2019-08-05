@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.mapbox.mapboxsdk.constants.MapboxConstants.ZOOM_RATE;
-import static com.mapbox.mapboxsdk.maps.MapboxMap.OnCameraMoveStartedListener.REASON_API_ANIMATION;
 import static com.mapbox.mapboxsdk.maps.MapboxMap.OnCameraMoveStartedListener.REASON_API_GESTURE;
 
 /**
@@ -75,9 +74,6 @@ final class MapGestureDetector {
 
   private AndroidGesturesManager gesturesManager;
 
-  // Manages when to ignore double-tap event because we've started the quick-zoom. See #14013.
-  private boolean executeDoubleTap;
-
   private Animator scaleAnimator;
   private Animator rotateAnimator;
   private final List<Animator> scheduledAnimators = new ArrayList<>();
@@ -88,6 +84,8 @@ final class MapGestureDetector {
    */
   @NonNull
   private Handler animationsTimeoutHandler = new Handler();
+
+  private boolean doubleTapRegistered;
 
   MapGestureDetector(@Nullable Context context, Transform transform, Projection projection, UiSettings uiSettings,
                      AnnotationManager annotationManager, CameraChangeDispatcher cameraChangeDispatcher) {
@@ -110,7 +108,9 @@ final class MapGestureDetector {
 
   private void initializeGestureListeners(@NonNull Context context, boolean attachDefaultListeners) {
     if (attachDefaultListeners) {
-      StandardGestureListener standardGestureListener = new StandardGestureListener();
+      StandardGestureListener standardGestureListener = new StandardGestureListener(
+        context.getResources().getDimension(
+          com.mapbox.android.gestures.R.dimen.mapbox_defaultScaleSpanSinceStartThreshold));
       MoveGestureListener moveGestureListener = new MoveGestureListener();
       ScaleGestureListener scaleGestureListener = new ScaleGestureListener(
         context.getResources().getDimension(R.dimen.mapbox_minimum_scale_velocity));
@@ -200,7 +200,12 @@ final class MapGestureDetector {
     boolean result = gesturesManager.onTouchEvent(motionEvent);
 
     switch (motionEvent.getActionMasked()) {
+      case MotionEvent.ACTION_POINTER_DOWN:
+        doubleTapFinished();
+        break;
+
       case MotionEvent.ACTION_UP:
+        doubleTapFinished();
         transform.setGestureInProgress(false);
 
         if (!scheduledAnimators.isEmpty()) {
@@ -216,6 +221,7 @@ final class MapGestureDetector {
       case MotionEvent.ACTION_CANCEL:
         scheduledAnimators.clear();
         transform.setGestureInProgress(false);
+        doubleTapFinished();
         break;
     }
 
@@ -304,6 +310,14 @@ final class MapGestureDetector {
   }
 
   private final class StandardGestureListener extends StandardGestureDetector.SimpleStandardOnGestureListener {
+
+    private PointF doubleTapFocalPoint;
+    private final float doubleTapMovementThreshold;
+
+    StandardGestureListener(float doubleTapMovementThreshold) {
+      this.doubleTapMovementThreshold = doubleTapMovementThreshold;
+    }
+
     @Override
     public boolean onDown(MotionEvent motionEvent) {
       return true;
@@ -336,34 +350,29 @@ final class MapGestureDetector {
     public boolean onDoubleTapEvent(MotionEvent motionEvent) {
       int action = motionEvent.getActionMasked();
       if (action == MotionEvent.ACTION_DOWN) {
-        executeDoubleTap = true;
-
-        // disable the move detector in preparation for the quickzoom,
-        // so that we don't move the map's center slightly before the quickzoom is started (see #14227)
-        gesturesManager.getMoveGestureDetector().setEnabled(false);
+        doubleTapFocalPoint = new PointF(motionEvent.getX(), motionEvent.getY());
+        doubleTapStarted();
       }
 
       if (motionEvent.getActionMasked() == MotionEvent.ACTION_UP) {
-        if (executeDoubleTap) {
-          // re-enable the move detector only if we did not start the quickzoom, otherwise, re-enable in the #onScaleEnd
-          gesturesManager.getMoveGestureDetector().setEnabled(true);
-        }
-
-        if (!uiSettings.isZoomGesturesEnabled() || !uiSettings.isDoubleTapGesturesEnabled() || !executeDoubleTap) {
+        float diffX = Math.abs(motionEvent.getX() - doubleTapFocalPoint.x);
+        float diffY = Math.abs(motionEvent.getY() - doubleTapFocalPoint.y);
+        if (diffX > doubleTapMovementThreshold || diffY > doubleTapMovementThreshold) {
+          // Ignore double-tap event because we've started the quick-zoom. See #14013.
           return false;
         }
 
-        PointF zoomFocalPoint;
+        if (!uiSettings.isZoomGesturesEnabled() || !uiSettings.isDoubleTapGesturesEnabled()) {
+          return false;
+        }
+
         // Single finger double tap
         if (constantFocalPoint != null) {
           // User provided focal point
-          zoomFocalPoint = constantFocalPoint;
-        } else {
-          // Zoom in on gesture
-          zoomFocalPoint = new PointF(motionEvent.getX(), motionEvent.getY());
+          doubleTapFocalPoint = constantFocalPoint;
         }
 
-        zoomInAnimated(zoomFocalPoint, false);
+        zoomInAnimated(doubleTapFocalPoint, false);
 
         return true;
       }
@@ -418,6 +427,21 @@ final class MapGestureDetector {
     }
   }
 
+  private void doubleTapStarted() {
+    // disable the move detector in preparation for the quickzoom,
+    // so that we don't move the map's center slightly before the quickzoom is started (see #14227)
+    gesturesManager.getMoveGestureDetector().setEnabled(false);
+    doubleTapRegistered = true;
+  }
+
+  private void doubleTapFinished() {
+    if (doubleTapRegistered) {
+      // re-enable the move detector in case of double tap
+      gesturesManager.getMoveGestureDetector().setEnabled(true);
+      doubleTapRegistered = false;
+    }
+  }
+
   private final class MoveGestureListener extends MoveGestureDetector.SimpleOnMoveGestureListener {
     @Override
     public boolean onMoveBegin(@NonNull MoveGestureDetector detector) {
@@ -464,13 +488,6 @@ final class MapGestureDetector {
     @Override
     public boolean onScaleBegin(@NonNull StandardScaleGestureDetector detector) {
       quickZoom = detector.getPointersCount() == 1;
-      if (quickZoom) {
-        // Unfortunately, the double-tap event is returned by the framework when the second `ACTION_DOWN` event
-        // is registered in the right interval, regardless of the following `ACTION_MOVE` events.
-        // That's why, the quick-zoom gives us a handy reference when we've exceeded the movement threshold
-        // and we should ignore the double-tap.
-        executeDoubleTap = false;
-      }
 
       if (!uiSettings.isZoomGesturesEnabled()) {
         return false;
@@ -480,6 +497,8 @@ final class MapGestureDetector {
         if (!uiSettings.isQuickZoomGesturesEnabled()) {
           return false;
         }
+        // re-try disabling the move detector in case double tap has been interrupted before quickzoom started
+        gesturesManager.getMoveGestureDetector().setEnabled(false);
       }
 
       cancelTransitionsIfRequired();
@@ -515,9 +534,7 @@ final class MapGestureDetector {
     @Override
     public void onScaleEnd(@NonNull StandardScaleGestureDetector detector, float velocityX, float velocityY) {
       if (quickZoom) {
-        // re-enabled the move detector only if the quickzoom happened
-        // we need to split the responsibility of re-enabling the move detector,
-        // because the double tap event (where the detector is disabled) can be canceled without warning (see #14598)
+        // re-enabled the move detector if the quickzoom happened
         gesturesManager.getMoveGestureDetector().setEnabled(true);
       }
 
@@ -696,7 +713,7 @@ final class MapGestureDetector {
         @Override
         public void onAnimationStart(Animator animation) {
           transform.cancelTransitions();
-          cameraChangeDispatcher.onCameraMoveStarted(REASON_API_ANIMATION);
+          cameraChangeDispatcher.onCameraMoveStarted(REASON_API_GESTURE);
         }
 
         @Override
@@ -805,7 +822,7 @@ final class MapGestureDetector {
       @Override
       public void onAnimationStart(Animator animation) {
         transform.cancelTransitions();
-        cameraChangeDispatcher.onCameraMoveStarted(REASON_API_ANIMATION);
+        cameraChangeDispatcher.onCameraMoveStarted(REASON_API_GESTURE);
       }
 
       @Override

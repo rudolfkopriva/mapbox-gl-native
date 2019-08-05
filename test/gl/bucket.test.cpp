@@ -114,7 +114,7 @@ TEST(Buckets, SymbolBucket) {
     gl::HeadlessBackend backend({ 512, 256 });
     gfx::BackendScope scope { backend };
 
-    style::SymbolLayoutProperties::PossiblyEvaluated layout;
+    auto layout = makeMutable<style::SymbolLayoutProperties::PossiblyEvaluated>();
     bool sdfIcons = false;
     bool iconsNeedLinear = false;
     bool sortFeaturesByY = false;
@@ -122,7 +122,7 @@ TEST(Buckets, SymbolBucket) {
     std::vector<SymbolInstance> symbolInstances;
 
     gl::Context context{ backend };
-    SymbolBucket bucket { layout, {}, 16.0f, 1.0f, 0, sdfIcons, iconsNeedLinear, sortFeaturesByY, bucketLeaderID, std::move(symbolInstances), 1.0f };
+    SymbolBucket bucket { std::move(layout), {}, 16.0f, 1.0f, 0, sdfIcons, iconsNeedLinear, sortFeaturesByY, bucketLeaderID, std::move(symbolInstances), 1.0f };
     ASSERT_FALSE(bucket.hasIconData());
     ASSERT_FALSE(bucket.hasTextData());
     ASSERT_FALSE(bucket.hasCollisionBoxData());
@@ -131,7 +131,7 @@ TEST(Buckets, SymbolBucket) {
 
     // SymbolBucket::addFeature() is a no-op.
     GeometryCollection point { { { 0, 0 } } };
-    bucket.addFeature(StubGeometryTileFeature { {}, FeatureType::Point, point, properties }, point, {}, PatternLayerMap());
+    bucket.addFeature(StubGeometryTileFeature { {}, FeatureType::Point, std::move(point), properties }, point, {}, PatternLayerMap());
     ASSERT_FALSE(bucket.hasData());
     ASSERT_FALSE(bucket.needsUpload());
 

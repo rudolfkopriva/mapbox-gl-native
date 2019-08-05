@@ -19,8 +19,8 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.mapbox.mapboxsdk.testapp.R
 import com.mapbox.mapboxsdk.testapp.utils.GeoParseUtil.loadStringFromAssets
 import com.mapbox.mapboxsdk.utils.BitmapUtils
-import kotlinx.android.synthetic.main.activity_latlngbounds.*
 import java.net.URISyntaxException
+import kotlinx.android.synthetic.main.activity_latlngbounds.*
 
 /**
  * Test activity showcasing using the LatLngBounds camera API.
@@ -32,11 +32,11 @@ class LatLngBoundsActivity : AppCompatActivity() {
   private lateinit var bounds: LatLngBounds
 
   private val peekHeight by lazy {
-    375.toPx(this) //375dp
+    375.toPx(this) // 375dp
   }
 
   private val additionalPadding by lazy {
-    32.toPx(this) //32dp
+    32.toPx(this) // 32dp
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -160,8 +160,6 @@ class LatLngBoundsActivity : AppCompatActivity() {
     super.onSaveInstanceState(outState)
     mapView.onSaveInstanceState(outState)
   }
-
 }
 
 fun Int.toPx(context: Context): Int = (this * context.resources.displayMetrics.density).toInt()
-
