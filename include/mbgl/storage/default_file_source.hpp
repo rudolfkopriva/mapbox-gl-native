@@ -12,6 +12,8 @@
 
 namespace mbgl {
 
+static bool repeatDownloadOnError = false;
+    
 namespace util {
 template <typename T> class Thread;
 } // namespace util

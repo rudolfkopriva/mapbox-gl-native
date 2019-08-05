@@ -18,6 +18,10 @@ void OfflineManager::setOfflineMapboxTileCountLimit(jni::JNIEnv&, jni::jlong lim
     fileSource->setOfflineMapboxTileCountLimit(limit);
 }
 
+void OfflineManager::setRepeatDownloadOnError(jni::JNIEnv&, jni::jboolean enabled) {
+    repeatDownloadOnError = enabled;
+}
+
 void OfflineManager::listOfflineRegions(jni::JNIEnv& env_, const jni::Object<FileSource>& jFileSource_, const jni::Object<ListOfflineRegionsCallback>& callback_) {
     auto globalCallback = jni::NewGlobal<jni::EnvAttachingDeleter>(env_, callback_);
     auto globalFilesource = jni::NewGlobal<jni::EnvAttachingDeleter>(env_, jFileSource_);

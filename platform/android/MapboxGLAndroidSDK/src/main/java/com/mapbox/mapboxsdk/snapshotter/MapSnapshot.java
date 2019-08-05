@@ -61,7 +61,7 @@ public class MapSnapshot {
   /**
    * @return The attributions for the sources of this snapshot.
    */
-  protected String[] getAttributions() {
+  public String[] getAttributions() {
     return attributions;
   }
 

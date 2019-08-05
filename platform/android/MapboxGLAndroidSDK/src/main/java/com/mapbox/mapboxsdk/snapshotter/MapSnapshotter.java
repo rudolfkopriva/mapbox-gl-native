@@ -322,8 +322,8 @@ public class MapSnapshotter {
     String programCacheDir = FileSource.getInternalCachePath(context);
 
     nativeInitialize(this, fileSource, options.pixelRatio, options.width,
-      options.height, options.styleUri, options.styleJson, options.region, options.cameraPosition,
-      options.showLogo, programCacheDir, options.localIdeographFontFamily);
+            options.height, options.styleUri, options.styleJson, options.region, options.cameraPosition,
+            options.showLogo, programCacheDir, options.localIdeographFontFamily);
   }
 
   /**

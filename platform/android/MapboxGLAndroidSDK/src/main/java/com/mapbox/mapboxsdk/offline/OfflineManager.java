@@ -618,6 +618,9 @@ public class OfflineManager {
   public native void setOfflineMapboxTileCountLimit(long limit);
 
   @Keep
+  public native void setRepeatDownloadOnError(boolean enabled);
+
+  @Keep
   private native void initialize(FileSource fileSource);
 
   @Override

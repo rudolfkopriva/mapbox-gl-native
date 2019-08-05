@@ -72,6 +72,8 @@ public:
 
     void setOfflineMapboxTileCountLimit(jni::JNIEnv&, jni::jlong limit);
 
+    void setRepeatDownloadOnError(jni::JNIEnv&, jni::jboolean enabled);
+
     void listOfflineRegions(jni::JNIEnv&, const jni::Object<FileSource>&, const jni::Object<ListOfflineRegionsCallback>& callback);
 
     void createOfflineRegion(jni::JNIEnv&,
