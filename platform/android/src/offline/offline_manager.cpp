@@ -1,10 +1,14 @@
 #include "offline_manager.hpp"
 
 #include <mbgl/util/string.hpp>
+#include <mbgl/actor/scheduler.hpp>
 
 #include "../attach_env.hpp"
 
 namespace mbgl {
+
+extern bool repeatDownloadOnError;
+
 namespace android {
 
 // OfflineManager //
@@ -216,6 +220,7 @@ void OfflineManager::registerNative(jni::JNIEnv& env) {
         "initialize",
         "finalize",
         METHOD(&OfflineManager::setOfflineMapboxTileCountLimit, "setOfflineMapboxTileCountLimit"),
+        METHOD(&OfflineManager::setRepeatDownloadOnError, "setRepeatDownloadOnError"),
         METHOD(&OfflineManager::listOfflineRegions, "listOfflineRegions"),
         METHOD(&OfflineManager::createOfflineRegion, "createOfflineRegion"),
         METHOD(&OfflineManager::mergeOfflineRegions, "mergeOfflineRegions"),

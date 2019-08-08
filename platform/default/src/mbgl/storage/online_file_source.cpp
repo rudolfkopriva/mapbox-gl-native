@@ -5,6 +5,7 @@
 #include <mbgl/storage/resource_transform.hpp>
 #include <mbgl/storage/response.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/actor/scheduler.hpp>
 
 #include <mbgl/actor/mailbox.hpp>
 #include <mbgl/util/constants.hpp>
@@ -26,6 +27,8 @@
 namespace mbgl {
 
 static uint32_t DEFAULT_MAXIMUM_CONCURRENT_REQUESTS = 20;
+
+bool repeatDownloadOnError;
 
 class OnlineFileRequest : public AsyncRequest {
 public:
@@ -441,6 +444,9 @@ void OnlineFileRequest::completed(Response response) {
 
     if (response.error) {
         failedRequests++;
+        if (repeatDownloadOnError && failedRequests > 2) {
+            failedRequests = 2;
+        }
         failedRequestReason = response.error->reason;
         retryAfter = response.error->retryAfter;
     } else {

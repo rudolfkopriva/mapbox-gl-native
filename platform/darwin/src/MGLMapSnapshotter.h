@@ -232,6 +232,8 @@ MGL_EXPORT
 
 -(void)recycle;
 
+-(void)reduceMemoryUse;
+
 -(BOOL)isTerminated;
 
 + (MGLImage *)mapboxLongStyleLogo;

@@ -594,6 +594,10 @@ const CGFloat MGLSnapshotterMinimumPixelSize = 64;
     }
 }
 
+-(void)reduceMemoryUse {
+    _mbglMapSnapshotter->reduceMemoryUse();
+}
+
 - (void)setOptions:(MGLMapSnapshotOptions *)options
 {
     if (_terminated) {

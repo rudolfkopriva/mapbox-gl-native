@@ -2,6 +2,7 @@
 
 #include <mbgl/actor/actor_ref.hpp>
 #include <mbgl/gfx/headless_frontend.hpp>
+#include <mbgl/renderer/renderer.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
 #include <mbgl/map/transform_state.hpp>
@@ -39,6 +40,8 @@ public:
     LatLngBounds getRegion() const;
 
     void snapshot(ActorRef<MapSnapshotter::Callback>);
+    
+    void reduceMemoryUse();
 
 private:
     HeadlessFrontend frontend;
@@ -73,6 +76,11 @@ MapSnapshotter::Impl::Impl(const std::pair<bool, std::string> style,
     if (region) {
         this->setRegion(*region);
     }
+}
+    
+void MapSnapshotter::Impl::reduceMemoryUse() {
+    Renderer* renderer = frontend.getRenderer();
+    renderer->reduceMemoryUse();
 }
 
 void MapSnapshotter::Impl::snapshot(ActorRef<MapSnapshotter::Callback> callback) {
@@ -215,6 +223,10 @@ CameraOptions MapSnapshotter::getCameraOptions() const {
 
 void MapSnapshotter::setRegion(const LatLngBounds& bounds) {
     impl->actor().invoke(&Impl::setRegion, std::move(bounds));
+}
+    
+void MapSnapshotter::reduceMemoryUse() {
+    impl->actor().invoke(&Impl::reduceMemoryUse);
 }
 
 LatLngBounds MapSnapshotter::getRegion() const {

@@ -53,6 +53,8 @@ public:
 
     void cancel(JNIEnv&);
 
+    void reduceMemoryUse(JNIEnv&);
+
 private:
     MBGL_STORE_THREAD(tid);
 

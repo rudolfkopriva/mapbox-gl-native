@@ -332,10 +332,6 @@ MGL_EXPORT
  */
 - (void)reloadPacks;
 
--(BOOL)repeatDownloadOnError;
-
--(void)setRepeatDownloadOnError:(BOOL)enabled;
-
 /**
  Sets the maximum number of Mapbox-hosted tiles that may be downloaded and
  stored on the current device.
@@ -349,6 +345,8 @@ MGL_EXPORT
     prohibits changing or bypassing this limit without permission from Mapbox.
  */
 - (void)setMaximumAllowedMapboxTiles:(uint64_t)maximumCount;
+
+-(void)setRepeatDownloadOnError:(BOOL)enabled;
 
 /**
  The cumulative size, measured in bytes, of all downloaded resources on disk.

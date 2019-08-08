@@ -49,7 +49,7 @@ public class OfflineActivity extends AppCompatActivity
   public static final String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
 
   // Style URL
-  public static final String STYLE_URL = Style.MAPBOX_STREETS;
+  public static final String STYLE_URL = Style.SATELLITE;
 
   /*
    * UI elements
@@ -225,7 +225,7 @@ public class OfflineActivity extends AppCompatActivity
     // Definition
     LatLngBounds bounds = LatLngBounds.from(41.69818780522522,-108.40637370944025,40.22012519047907,-109.69412103295325);
     double minZoom = 7;
-    double maxZoom = 13;
+    double maxZoom = 12;
     float pixelRatio = this.getResources().getDisplayMetrics().density;
     OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
       STYLE_URL, bounds, minZoom, maxZoom, pixelRatio);
@@ -233,6 +233,7 @@ public class OfflineActivity extends AppCompatActivity
     // Sample way of encoding metadata from a JSONObject
     byte[] metadata = OfflineUtils.convertRegionName(regionName);
 
+    offlineManager.setRepeatDownloadOnError(true);
     // Create region
     offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
       @Override
@@ -280,7 +281,7 @@ public class OfflineActivity extends AppCompatActivity
       @Override
       public void onError(OfflineRegionError error) {
         Timber.e("onError: %s, %s", error.getReason(), error.getMessage());
-        offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE);
+        //offlineRegion.setDownloadState(OfflineRegion.STATE_INACTIVE);
       }
 
       @Override

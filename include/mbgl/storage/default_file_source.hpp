@@ -12,8 +12,6 @@
 
 namespace mbgl {
 
-static bool repeatDownloadOnError = false;
-    
 namespace util {
 template <typename T> class Thread;
 } // namespace util
@@ -230,6 +228,8 @@ public:
      * otherwise the default maximum size will be used.
      */
     void setMaximumAmbientCacheSize(uint64_t size, std::function<void (std::exception_ptr)> callback);
+    
+    void setRepeatDownloadOnError(bool enabled);
 
     // For testing only.
     void setOnlineStatus(bool);

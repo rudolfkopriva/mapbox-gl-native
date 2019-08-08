@@ -69,14 +69,6 @@ const MGLExceptionName MGLUnsupportedRegionTypeException = @"MGLUnsupportedRegio
     return sharedOfflineStorage;
 }
 
--(BOOL)repeatDownloadOnError {
-    return mbgl::repeatDownloadOnError;
-}
-
--(void)setRepeatDownloadOnError:(BOOL)enabled {
-    mbgl::repeatDownloadOnError = enabled;
-}
-
 #if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR
 - (void)pauseFileSource:(__unused NSNotification *)notification {
     if (self.isPaused) {
@@ -514,6 +506,10 @@ const MGLExceptionName MGLUnsupportedRegionTypeException = @"MGLUnsupportedRegio
 - (void)setMaximumAllowedMapboxTiles:(uint64_t)maximumCount {
     MGLLogDebug(@"Setting maximumAllowedMapboxTiles: %lu", (unsigned long)maximumCount);
     _mbglFileSource->setOfflineMapboxTileCountLimit(maximumCount);
+}
+
+-(void)setRepeatDownloadOnError:(BOOL)enabled {
+    _mbglFileSource->setRepeatDownloadOnError(enabled);
 }
 
 #pragma mark - Ambient Cache management

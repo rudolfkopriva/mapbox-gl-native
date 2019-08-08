@@ -57,6 +57,8 @@ public:
     using Attributions = std::vector<std::string>;
     using Callback = std::function<void (std::exception_ptr, PremultipliedImage, Attributions, PointForFn, LatLngForFn)>;
     void snapshot(ActorRef<Callback>);
+    
+    void reduceMemoryUse();
 
 private:
     class Impl;

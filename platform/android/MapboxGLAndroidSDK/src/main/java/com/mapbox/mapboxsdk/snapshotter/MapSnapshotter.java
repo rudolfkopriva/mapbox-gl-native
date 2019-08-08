@@ -404,6 +404,10 @@ public class MapSnapshotter {
     nativeCancel();
   }
 
+  public void reduceMemoryUse() {
+    nativeReduceMemoryUse();
+  }
+
   /**
    * Draw an overlay on the map snapshot.
    *
@@ -597,7 +601,7 @@ public class MapSnapshotter {
     ThreadUtils.checkThread(TAG);
   }
 
-  protected void reset() {
+  public void reset() {
     callback = null;
     errorHandler = null;
   }
@@ -615,6 +619,9 @@ public class MapSnapshotter {
 
   @Keep
   protected native void nativeCancel();
+
+  @Keep
+  protected native void nativeReduceMemoryUse();
 
   @Override
   @Keep

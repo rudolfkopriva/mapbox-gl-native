@@ -17,6 +17,8 @@
 #include <utility>
 
 namespace mbgl {
+    
+extern bool repeatDownloadOnError;
 
 class DefaultFileSource::Impl {
 public:
@@ -358,6 +360,10 @@ void DefaultFileSource::clearAmbientCache(std::function<void (std::exception_ptr
 
 void DefaultFileSource::setMaximumAmbientCacheSize(uint64_t size, std::function<void (std::exception_ptr)> callback) {
     impl->actor().invoke(&Impl::setMaximumAmbientCacheSize, size, std::move(callback));
+}
+    
+void DefaultFileSource::setRepeatDownloadOnError(bool enabled) {
+    repeatDownloadOnError = enabled;
 }
 
 // For testing only:

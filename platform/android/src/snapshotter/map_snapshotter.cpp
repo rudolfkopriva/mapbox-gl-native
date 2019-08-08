@@ -112,6 +112,10 @@ void MapSnapshotter::cancel(JNIEnv& env) {
     deactivateFilesource(env);
 }
 
+void MapSnapshotter::reduceMemoryUse(JNIEnv&) {
+    snapshotter->reduceMemoryUse();
+}
+
 void MapSnapshotter::setStyleUrl(JNIEnv& env, const jni::String& styleURL) {
     snapshotter->setStyleURL(jni::Make<std::string>(env, styleURL));
 }
@@ -170,7 +174,8 @@ void MapSnapshotter::registerNative(jni::JNIEnv& env) {
                                             METHOD(&MapSnapshotter::setCameraPosition, "setCameraPosition"),
                                             METHOD(&MapSnapshotter::setRegion, "setRegion"),
                                             METHOD(&MapSnapshotter::start, "nativeStart"),
-                                            METHOD(&MapSnapshotter::cancel, "nativeCancel")
+                                            METHOD(&MapSnapshotter::cancel, "nativeCancel"),
+                                            METHOD(&MapSnapshotter::reduceMemoryUse, "nativeReduceMemoryUse")
     );
 }
 
