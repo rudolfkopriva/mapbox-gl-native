@@ -21,9 +21,9 @@ class CrossTileSymbolLayerIndex;
 class PlacedSymbol {
 public:
     PlacedSymbol(Point<float> anchorPoint_, uint16_t segment_, float lowerSize_, float upperSize_,
-            std::array<float, 2> lineOffset_, WritingModeType writingModes_, GeometryCoordinates line_, std::vector<float> tileDistances_) :
+            std::array<float, 2> lineOffset_, WritingModeType writingModes_, GeometryCoordinates line_, std::vector<float> tileDistances_, optional<size_t> placedIconIndex_ = nullopt) :
         anchorPoint(anchorPoint_), segment(segment_), lowerSize(lowerSize_), upperSize(upperSize_),
-        lineOffset(lineOffset_), writingModes(writingModes_), line(std::move(line_)), tileDistances(std::move(tileDistances_)), hidden(false), vertexStartIndex(0)
+        lineOffset(lineOffset_), writingModes(writingModes_), line(std::move(line_)), tileDistances(std::move(tileDistances_)), hidden(false), vertexStartIndex(0), placedIconIndex(std::move(placedIconIndex_))
     {
     }
     Point<float> anchorPoint;
@@ -39,6 +39,13 @@ public:
     size_t vertexStartIndex;
     // The crossTileID is only filled/used on the foreground for variable text anchors
     uint32_t crossTileID = 0u;
+    // The placedOrientation is only used when symbol layer's property is set to support
+    // placement for orientation variants.
+    optional<style::TextWritingModeType> placedOrientation;
+    float angle = 0;
+
+    // Reference to placed icon, only applicable for text symbols.
+    optional<size_t> placedIconIndex;
 };
 
 class SymbolBucket final : public Bucket {
@@ -48,12 +55,13 @@ public:
                  const style::PropertyValue<float>& textSize,
                  const style::PropertyValue<float>& iconSize,
                  float zoom,
-                 bool sdfIcons,
                  bool iconsNeedLinear,
                  bool sortFeaturesByY,
                  const std::string bucketLeaderID,
                  const std::vector<SymbolInstance>&&,
-                 const float tilePixelRatio);
+                 const float tilePixelRatio,
+                 bool allowVerticalPlacement,
+                 std::vector<style::TextWritingModeType> placementModes);
     ~SymbolBucket() override;
 
     void upload(gfx::UploadPass&) override;
@@ -63,6 +71,7 @@ public:
     void updateVertices(Placement&, bool updateOpacities, const TransformState&, const RenderTile&, std::set<uint32_t>&) override;
     bool hasTextData() const;
     bool hasIconData() const;
+    bool hasSdfIconData() const;
     bool hasCollisionBoxData() const;
     bool hasCollisionCircleData() const;
     bool hasFormatSectionOverrides() const;
@@ -70,21 +79,21 @@ public:
 
     void sortFeatures(const float angle);
     // The result contains references to the `symbolInstances` items, sorted by viewport Y.
-    std::vector<std::reference_wrapper<SymbolInstance>> getSortedSymbols(const float angle);
+    std::vector<std::reference_wrapper<const SymbolInstance>> getSortedSymbols(const float angle) const;
 
     Immutable<style::SymbolLayoutProperties::PossiblyEvaluated> layout;
     const std::string bucketLeaderID;
     float sortedAngle = std::numeric_limits<float>::max();
 
     // Flags
-    const bool sdfIcons : 1;
     const bool iconsNeedLinear : 1;
     const bool sortFeaturesByY : 1;
     bool staticUploaded : 1;
     bool placementChangesUploaded : 1;
     bool dynamicUploaded : 1;
     bool sortUploaded : 1;
-    bool justReloaded : 1;
+    // Set and used by placement.
+    mutable bool justReloaded : 1;
     bool hasVariablePlacement : 1;
 
     std::vector<SymbolInstance> symbolInstances;
@@ -113,9 +122,9 @@ public:
 
     std::unique_ptr<SymbolSizeBinder> iconSizeBinder;
 
-    struct IconBuffer : public Buffer {
-    } icon;
-
+    Buffer icon;
+    Buffer sdfIcon;
+    
     struct CollisionBuffer {
         gfx::VertexVector<gfx::Vertex<CollisionBoxLayoutAttributes>> vertices;
         gfx::VertexVector<gfx::Vertex<CollisionBoxDynamicAttributes>> dynamicVertices;
@@ -149,7 +158,8 @@ public:
 
     const float tilePixelRatio;
     uint32_t bucketInstanceId;
-
+    const bool allowVerticalPlacement;
+    const std::vector<style::TextWritingModeType> placementModes;
     mutable optional<bool> hasFormatSectionOverrides_;
 
     std::shared_ptr<std::vector<size_t>> featureSortOrder;

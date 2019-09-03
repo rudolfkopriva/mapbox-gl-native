@@ -51,9 +51,10 @@ private:
     void addFeature(const size_t,
                     const SymbolFeature&,
                     const ShapedTextOrientations& shapedTextOrientations,
-                    const optional<PositionedIcon>& shapedIcon,
+                    optional<PositionedIcon> shapedIcon,
                     const GlyphPositions&,
-                    Point<float> textOffset);
+                    Point<float> textOffset,
+                    const SymbolContent iconType);
 
     bool anchorIsTooClose(const std::u16string& text, const float repeatDistance, const Anchor&);
     std::map<std::u16string, std::vector<Anchor>> compareText;
@@ -93,9 +94,10 @@ private:
     const uint32_t tileSize;
     const float tilePixelRatio;
 
-    bool sdfIcons = false;
     bool iconsNeedLinear = false;
     bool sortFeaturesByY = false;
+    bool allowVerticalPlacement = false;
+    std::vector<style::TextWritingModeType> placementModes;
 
     style::TextSize::UnevaluatedType textSize;
     style::IconSize::UnevaluatedType iconSize;
