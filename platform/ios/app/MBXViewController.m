@@ -214,6 +214,10 @@ CLLocationCoordinate2D randomWorldCoordinate() {
 @property (nonatomic) BOOL debugLoggingEnabled;
 @property (nonatomic) NSMutableArray<UIWindow *> *helperWindows;
 @property (nonatomic) NSMutableArray<UIView *> *contentInsetsOverlays;
+@property (nonatomic) IBOutlet UIImageView *snapshotView;
+@property (nonatomic) IBOutlet UILabel *snapshotTimeLabel;
+
+@property (nonatomic) MGLMapSnapshotter* snapshotter;
 
 @end
 
@@ -302,6 +306,7 @@ CLLocationCoordinate2D randomWorldCoordinate() {
             }
         }
     }];
+    [self.mapView setCenterCoordinate:CLLocationCoordinate2DMake(44.2149801591968, -114.942534193397) zoomLevel:12 animated:false];
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
@@ -1593,6 +1598,47 @@ CLLocationCoordinate2D randomWorldCoordinate() {
     return mostSpecificLanguage ?: @"en";
 }
 
+-(IBAction)reset {
+    self.snapshotter = nil;
+}
+
+-(IBAction)createSnapshot
+{
+    MGLMapCamera* mapCamera = self.mapView.camera;
+    
+    MGLMapSnapshotOptions* options = [[MGLMapSnapshotOptions alloc] initWithStyleURL:self.mapView.styleURL camera:mapCamera size:CGSizeMake(self.snapshotView.frame.size.width, self.snapshotView.frame.size.height)];
+    options.zoomLevel = self.mapView.zoomLevel;
+    
+    
+    mapCamera = [MGLMapCamera cameraLookingAtCenterCoordinate:self.mapView.camera.centerCoordinate altitude:0 pitch:0 heading:0];
+    options = [[MGLMapSnapshotOptions alloc] initWithStyleURL:self.mapView.styleURL camera:mapCamera size:CGSizeMake(256, 256)];
+    options.zoomLevel = self.mapView.zoomLevel;
+    options.scale = 2.0;
+    
+    self.snapshotView.image = nil;
+    
+    // Create and start the snapshotter
+    if (self.snapshotter == nil) {
+        self.snapshotter = [[MGLMapSnapshotter alloc] initWithOptions:options];
+    } else {
+        [self.snapshotter recycle];
+        [self.snapshotter setOptions:options];
+    }
+    
+    NSDate* startTime = [NSDate date];
+    
+    [self.snapshotter startWithCompletionHandler: ^(MGLMapSnapshot* snapshot, NSError *error) {
+        if (error) {
+            NSLog(@"Could not load snapshot: %@", [error localizedDescription]);
+        } else {
+            self.snapshotView.image = snapshot.image;
+        }
+        NSDate* endTime = [NSDate date];
+        double diff = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970;
+        self.snapshotTimeLabel.text = [NSString stringWithFormat:@"%f", diff];
+    }];
+}
+
 - (IBAction)startWorldTour
 {
     _isTouringWorld = YES;
@@ -1966,12 +2012,12 @@ CLLocationCoordinate2D randomWorldCoordinate() {
             @"Satellite Streets",
         ];
         styleURLs = @[
-            [MGLStyle streetsStyleURL],
+            [MGLStyle satelliteStreetsStyleURL],
             [MGLStyle outdoorsStyleURL],
             [MGLStyle lightStyleURL],
             [MGLStyle darkStyleURL],
             [MGLStyle satelliteStyleURL],
-            [MGLStyle satelliteStreetsStyleURL]
+            [MGLStyle streetsStyleURL]
         ];
         NSAssert(styleNames.count == styleURLs.count, @"Style names and URLs don’t match.");
 

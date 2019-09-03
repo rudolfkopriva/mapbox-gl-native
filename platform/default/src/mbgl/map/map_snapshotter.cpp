@@ -10,6 +10,7 @@
 #include <mbgl/style/style.hpp>
 #include <mbgl/util/event.hpp>
 #include <mbgl/map/transform.hpp>
+#include <mbgl/storage/network_status.hpp>
 
 namespace mbgl {
 
@@ -42,6 +43,10 @@ public:
     void snapshot(ActorRef<MapSnapshotter::Callback>);
     
     void reduceMemoryUse();
+    
+    void setDebug(MapDebugOptions debugOptions);
+    
+    void setNetworkStatus(bool isOnline);
 
 private:
     HeadlessFrontend frontend;
@@ -82,6 +87,18 @@ void MapSnapshotter::Impl::reduceMemoryUse() {
     Renderer* renderer = frontend.getRenderer();
     renderer->reduceMemoryUse();
 }
+    
+void MapSnapshotter::Impl::setDebug(MapDebugOptions debugOptions) {
+    map.setDebug(debugOptions);
+}
+    
+void MapSnapshotter::Impl::setNetworkStatus(bool isOnline) {
+    if (isOnline) {
+        mbgl::NetworkStatus::Set(NetworkStatus::Status::Online);
+    } else {
+        mbgl::NetworkStatus::Set(NetworkStatus::Status::Offline);
+    }
+}
 
 void MapSnapshotter::Impl::snapshot(ActorRef<MapSnapshotter::Callback> callback) {
     map.renderStill([this, callback = std::move(callback)] (std::exception_ptr error) {
@@ -114,6 +131,8 @@ void MapSnapshotter::Impl::snapshot(ActorRef<MapSnapshotter::Callback> callback)
                 attributions.push_back(*attribution);
             }
         }
+        
+        map.dumpDebugLogs();
 
         // Invoke callback
         callback.invoke(
@@ -227,6 +246,14 @@ void MapSnapshotter::setRegion(const LatLngBounds& bounds) {
     
 void MapSnapshotter::reduceMemoryUse() {
     impl->actor().invoke(&Impl::reduceMemoryUse);
+}
+    
+void MapSnapshotter::setDebug(MapDebugOptions debugOptions) {
+    impl->actor().invoke(&Impl::setDebug, std::move(debugOptions));
+}
+    
+void MapSnapshotter::setNetworkStatus(bool isOnline) {
+    impl->actor().invoke(&Impl::setNetworkStatus, std::move(isOnline));
 }
 
 LatLngBounds MapSnapshotter::getRegion() const {

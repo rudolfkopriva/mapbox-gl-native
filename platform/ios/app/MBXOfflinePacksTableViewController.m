@@ -41,6 +41,7 @@ static NSString * const MBXOfflinePacksTableViewActiveCellReuseIdentifier = @"Ac
 }
 
 - (void)dealloc {
+    [[MGLOfflineStorage sharedOfflineStorage] setRepeatDownloadOnError:false];
     [[MGLOfflineStorage sharedOfflineStorage] removeObserver:self forKeyPath:@"packs"];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -102,7 +103,7 @@ static NSString * const MBXOfflinePacksTableViewActiveCellReuseIdentifier = @"Ac
             name = nameField.placeholder;
         }
 
-        MGLTilePyramidOfflineRegion *region = [[MGLTilePyramidOfflineRegion alloc] initWithStyleURL:mapView.styleURL bounds:mapView.visibleCoordinateBounds fromZoomLevel:mapView.zoomLevel toZoomLevel:mapView.maximumZoomLevel];
+        MGLTilePyramidOfflineRegion *region = [[MGLTilePyramidOfflineRegion alloc] initWithStyleURL:mapView.styleURL bounds:mapView.visibleCoordinateBounds fromZoomLevel:mapView.zoomLevel toZoomLevel:18];
         [[MGLOfflineStorage sharedOfflineStorage] setRepeatDownloadOnError:true];
         id ideographicFontFamilyName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"MGLIdeographicFontFamilyName"];
         if([ideographicFontFamilyName isKindOfClass:[NSNumber class]] && ![ideographicFontFamilyName boolValue]){

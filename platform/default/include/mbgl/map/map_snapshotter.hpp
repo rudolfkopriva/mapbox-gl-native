@@ -4,6 +4,7 @@
 #include <mbgl/util/thread.hpp>
 #include <mbgl/util/optional.hpp>
 #include <mbgl/util/geo.hpp>
+#include <mbgl/map/mode.hpp>
 
 #include <exception>
 #include <memory>
@@ -59,6 +60,8 @@ public:
     void snapshot(ActorRef<Callback>);
     
     void reduceMemoryUse();
+    void setDebug(MapDebugOptions debugOptions);
+    void setNetworkStatus(bool isOnline);
 
 private:
     class Impl;

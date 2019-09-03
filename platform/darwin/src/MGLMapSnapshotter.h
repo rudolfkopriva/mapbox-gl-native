@@ -234,6 +234,10 @@ MGL_EXPORT
 
 -(void)reduceMemoryUse;
 
+- (void)setDebugMask:(MGLMapDebugMaskOptions)debugMask;
+
+-(void)setNetworkStatus:(bool)isOnline;
+
 -(BOOL)isTerminated;
 
 + (MGLImage *)mapboxLongStyleLogo;

@@ -29,6 +29,7 @@
 #import <QuartzCore/QuartzCore.h>
 #endif
 
+
 const CGPoint MGLLogoImagePosition = CGPointMake(8, 8);
 const CGFloat MGLSnapshotterMinimumPixelSize = 64;
 
@@ -596,6 +597,43 @@ const CGFloat MGLSnapshotterMinimumPixelSize = 64;
 
 -(void)reduceMemoryUse {
     _mbglMapSnapshotter->reduceMemoryUse();
+}
+
+- (void)setDebugMask:(MGLMapDebugMaskOptions)debugMask
+{
+    if (!_mbglMapSnapshotter)
+    {
+        return;
+    }
+    
+    mbgl::MapDebugOptions options = mbgl::MapDebugOptions::NoDebug;
+    if (debugMask & MGLMapDebugTileBoundariesMask)
+    {
+        options |= mbgl::MapDebugOptions::TileBorders;
+    }
+    if (debugMask & MGLMapDebugTileInfoMask)
+    {
+        options |= mbgl::MapDebugOptions::ParseStatus;
+    }
+    if (debugMask & MGLMapDebugTimestampsMask)
+    {
+        options |= mbgl::MapDebugOptions::Timestamps;
+    }
+    if (debugMask & MGLMapDebugCollisionBoxesMask)
+    {
+        options |= mbgl::MapDebugOptions::Collision;
+    }
+    if (debugMask & MGLMapDebugOverdrawVisualizationMask)
+    {
+        options |= mbgl::MapDebugOptions::Overdraw;
+    }
+    _mbglMapSnapshotter->setDebug(options);
+}
+
+-(void)setNetworkStatus:(bool)isOnline {
+    if (_mbglMapSnapshotter != nil) {
+        _mbglMapSnapshotter->setNetworkStatus(isOnline);
+    }
 }
 
 - (void)setOptions:(MGLMapSnapshotOptions *)options
