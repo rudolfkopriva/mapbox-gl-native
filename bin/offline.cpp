@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
     args::ValueFlag<std::string> styleValue(argumentParser, "URL", "Map stylesheet", {'s', "style"});
     args::ValueFlag<std::string> outputValue(argumentParser, "file", "Output database file name", {'o', "output"});
     args::ValueFlag<std::string> apiBaseValue(argumentParser, "URL", "API Base URL", {'a', "apiBaseURL"});
+    args::ValueFlag<int> resourceLimitValue(argumentParser, "limit", "Resources limit", {'l', "limit"});
     
     args::Group mergeGroup(argumentParser, "Merge databases:", args::Group::Validators::AllOrNone);
     args::ValueFlag<std::string> mergePathValue(mergeGroup, "merge", "Database to merge from", {'m', "merge"});
@@ -130,6 +131,7 @@ int main(int argc, char *argv[]) {
     const double pixelRatio = pixelRatioValue ? args::get(pixelRatioValue) : 1.0;
     const bool includeIdeographs = includeIdeographsValue ? args::get(includeIdeographsValue) : false;
     const std::string output = outputValue ? args::get(outputValue) : "offline.db";
+    const int resourcesLimit = resourceLimitValue ? args::get(resourceLimitValue) : 6000;
     
     using namespace mbgl;
     
@@ -166,6 +168,7 @@ int main(int argc, char *argv[]) {
 
     fileSource.setAccessToken(token);
     fileSource.setAPIBaseURL(apiBaseURL);
+    fileSource.setOfflineMapboxTileCountLimit(resourcesLimit);
 
     if (inputDb && mergePath) {
         DefaultFileSource inputSource(*inputDb, ".");
