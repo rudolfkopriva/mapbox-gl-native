@@ -119,7 +119,11 @@ int main(int argc, char *argv[]) {
         exit(2);
     }
 
-    std::string style = styleValue ? args::get(styleValue) : mbgl::util::default_styles::streets.url;
+    std::string style = styleValue ? args::get(styleValue) : "";
+    if (style.compare("") == 0) {
+        std::cout << argumentParser;
+        exit(0);
+    }
 
     mbgl::optional<std::string> mergePath = {};
     if (mergePathValue) mergePath = args::get(mergePathValue);
